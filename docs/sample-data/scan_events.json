@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "tag_id": 1,
+    "user_id": 1,
+    "timestamp": "2024-01-15T09:00:00Z",
+    "device_type": "Android",
+    "action_taken": "view_location",
+    "metadata": "{}"
+  },
+  {
+    "id": 2,
+    "tag_id": 4,
+    "user_id": 3,
+    "timestamp": "2024-01-15T09:30:00Z",
+    "device_type": "iOS",
+    "action_taken": "view_location",
+    "metadata": "{}"
+  },
+  {
+    "id": 3,
+    "tag_id": 4,
+    "user_id": 3,
+    "timestamp": "2024-01-15T09:31:00Z",
+    "device_type": "iOS",
+    "action_taken": "adjust_quantity",
+    "metadata": "{\"item_id\": 1, \"adjustment\": -5, \"reason\": \"picked for order\"}"
+  },
+  {
+    "id": 4,
+    "tag_id": 8,
+    "user_id": 3,
+    "timestamp": "2024-01-15T10:00:00Z",
+    "device_type": "iOS",
+    "action_taken": "view_item",
+    "metadata": "{}"
+  },
+  {
+    "id": 5,
+    "tag_id": 7,
+    "user_id": 2,
+    "timestamp": "2024-01-15T11:00:00Z",
+    "device_type": "Android",
+    "action_taken": "start_audit",
+    "metadata": "{\"audit_type\": \"inventory_count\"}"
+  },
+  {
+    "id": 6,
+    "tag_id": 5,
+    "user_id": 3,
+    "timestamp": "2024-01-15T14:00:00Z",
+    "device_type": "iOS",
+    "action_taken": "add_item",
+    "metadata": "{\"item_id\": 3, \"quantity\": 50}"
+  },
+  {
+    "id": 7,
+    "tag_id": 3,
+    "user_id": 3,
+    "timestamp": "2024-01-15T15:30:00Z",
+    "device_type": "Android",
+    "action_taken": "flag_discrepancy",
+    "metadata": "{\"item_id\": 5, \"expected\": 15, \"actual\": 10, \"note\": \"Missing units\"}"
+  },
+  {
+    "id": 8,
+    "tag_id": 2,
+    "user_id": 4,
+    "timestamp": "2024-01-15T16:00:00Z",
+    "device_type": "Desktop",
+    "action_taken": "view_location",
+    "metadata": "{}"
+  }
+]

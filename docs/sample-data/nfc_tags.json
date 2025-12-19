@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "tag_uid": "NFC-WH-A-001",
+    "tag_type": "location",
+    "linked_entity_id": 1,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "tag_uid": "NFC-SH-A1-001",
+    "tag_type": "location",
+    "linked_entity_id": 2,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "tag_uid": "NFC-SH-A2-001",
+    "tag_type": "location",
+    "linked_entity_id": 3,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "tag_uid": "NFC-BIN-A101",
+    "tag_type": "location",
+    "linked_entity_id": 4,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 5,
+    "tag_uid": "NFC-BIN-A102",
+    "tag_type": "location",
+    "linked_entity_id": 5,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 6,
+    "tag_uid": "NFC-OFF-001",
+    "tag_type": "location",
+    "linked_entity_id": 6,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 7,
+    "tag_uid": "NFC-CAB-001",
+    "tag_type": "location",
+    "linked_entity_id": 7,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 8,
+    "tag_uid": "NFC-ITEM-001",
+    "tag_type": "item",
+    "linked_entity_id": 1,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 9,
+    "tag_uid": "NFC-ITEM-002",
+    "tag_type": "item",
+    "linked_entity_id": 2,
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 10,
+    "tag_uid": "NFC-DISABLED-001",
+    "tag_type": "location",
+    "linked_entity_id": null,
+    "status": "disabled",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+]

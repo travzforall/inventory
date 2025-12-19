@@ -1,0 +1,38 @@
+[
+  {
+    "email": "admin@homely.local",
+    "name": "Admin User",
+    "role": "admin",
+    "is_active": true,
+    "password_hash": "admin123",
+    "created_at": "2024-01-01T00:00:00Z",
+    "last_login_at": null
+  },
+  {
+    "email": "manager@homely.local",
+    "name": "Jane Manager",
+    "role": "manager",
+    "is_active": true,
+    "password_hash": "manager123",
+    "created_at": "2024-01-02T00:00:00Z",
+    "last_login_at": null
+  },
+  {
+    "email": "staff@homely.local",
+    "name": "John Staff",
+    "role": "inventory_staff",
+    "is_active": true,
+    "password_hash": "staff123",
+    "created_at": "2024-01-03T00:00:00Z",
+    "last_login_at": null
+  },
+  {
+    "email": "viewer@homely.local",
+    "name": "Bob Viewer",
+    "role": "viewer",
+    "is_active": true,
+    "password_hash": "viewer123",
+    "created_at": "2024-01-04T00:00:00Z",
+    "last_login_at": null
+  }
+]

@@ -1,0 +1,79 @@
+[
+  {
+    "id": 1,
+    "name": "Warehouse A",
+    "description": "Main warehouse building - ground floor",
+    "parent_location_id": null,
+    "image_gallery": "[]",
+    "nfc_tag_id": 1,
+    "capacity_rules": "{\"maxItems\": 1000}",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Shelf A1",
+    "description": "First shelf in row A",
+    "parent_location_id": 1,
+    "image_gallery": "[]",
+    "nfc_tag_id": 2,
+    "capacity_rules": "{\"maxItems\": 50}",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "name": "Shelf A2",
+    "description": "Second shelf in row A",
+    "parent_location_id": 1,
+    "image_gallery": "[]",
+    "nfc_tag_id": 3,
+    "capacity_rules": "{\"maxItems\": 50}",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "name": "Bin A1-01",
+    "description": "Storage bin on Shelf A1",
+    "parent_location_id": 2,
+    "image_gallery": "[]",
+    "nfc_tag_id": 4,
+    "capacity_rules": "{\"maxItems\": 20}",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 5,
+    "name": "Bin A1-02",
+    "description": "Storage bin on Shelf A1",
+    "parent_location_id": 2,
+    "image_gallery": "[]",
+    "nfc_tag_id": 5,
+    "capacity_rules": "{\"maxItems\": 20}",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 6,
+    "name": "Office Storage",
+    "description": "Office supply storage room",
+    "parent_location_id": null,
+    "image_gallery": "[]",
+    "nfc_tag_id": 6,
+    "capacity_rules": "{\"maxItems\": 200}",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 7,
+    "name": "Cabinet 1",
+    "description": "Office supply cabinet",
+    "parent_location_id": 6,
+    "image_gallery": "[]",
+    "nfc_tag_id": 7,
+    "capacity_rules": "{\"maxItems\": 100}",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+]
