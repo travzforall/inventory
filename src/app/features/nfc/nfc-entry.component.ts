@@ -1,6 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { LocationService, InventoryItemService } from '../../core/services';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 export interface NfcTagData {
   type: 'location' | 'item';
@@ -26,7 +29,13 @@ export interface NfcTagData {
           @if (processing()) {
             <span class="loading loading-spinner loading-lg text-primary"></span>
             <h2 class="card-title mt-4">Processing NFC Tag...</h2>
-            <p class="text-base-content/70">Detected: {{ tagData()?.type | titlecase }}</p>
+            <p class="text-base-content/70">
+              @if (statusMessage()) {
+                {{ statusMessage() }}
+              } @else {
+                Detected: {{ tagData()?.type | titlecase }}
+              }
+            </p>
           } @else if (error()) {
             <div class="text-error">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,10 +56,13 @@ export interface NfcTagData {
 export class NfcEntryComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private locationService = inject(LocationService);
+  private itemService = inject(InventoryItemService);
 
   processing = signal(true);
   error = signal(false);
   errorMessage = signal('');
+  statusMessage = signal('');
   tagData = signal<NfcTagData | null>(null);
 
   ngOnInit(): void {
@@ -67,11 +79,10 @@ export class NfcEntryComponent implements OnInit {
     }
 
     this.tagData.set(data);
+    this.statusMessage.set('Checking if already exists...');
 
-    // Small delay for visual feedback, then redirect
-    setTimeout(() => {
-      this.redirectToForm(data);
-    }, 500);
+    // Check if the location/item already exists
+    this.checkExistingAndRedirect(data);
   }
 
   private parseTagData(params: Record<string, string>): NfcTagData | null {
@@ -109,6 +120,75 @@ export class NfcEntryComponent implements OnInit {
     }
 
     return data;
+  }
+
+  private checkExistingAndRedirect(data: NfcTagData): void {
+    if (data.type === 'location') {
+      this.checkExistingLocation(data);
+    } else {
+      this.checkExistingItem(data);
+    }
+  }
+
+  private checkExistingLocation(data: NfcTagData): void {
+    // Search for location by name
+    this.locationService.getAll().pipe(
+      map(locations => {
+        // Find by exact name match (case-insensitive)
+        const searchName = data.name?.toLowerCase().trim();
+        return locations.find(loc => loc.name.toLowerCase().trim() === searchName);
+      }),
+      catchError(() => of(null))
+    ).subscribe(existingLocation => {
+      if (existingLocation) {
+        // Location exists - go to detail view
+        this.statusMessage.set(`Found: ${existingLocation.name}`);
+        setTimeout(() => {
+          this.router.navigate(['/locations', existingLocation.id]);
+        }, 300);
+      } else {
+        // Location doesn't exist - go to add form
+        this.statusMessage.set('New location - opening form...');
+        setTimeout(() => {
+          this.redirectToForm(data);
+        }, 300);
+      }
+    });
+  }
+
+  private checkExistingItem(data: NfcTagData): void {
+    // Search for item by SKU first (more unique), then by name
+    this.itemService.getAll().pipe(
+      map(items => {
+        // First try to match by SKU if provided
+        if (data.sku) {
+          const searchSku = data.sku.toLowerCase().trim();
+          const bySkU = items.find(item => item.sku.toLowerCase().trim() === searchSku);
+          if (bySkU) return bySkU;
+        }
+        // Then try by name
+        if (data.name) {
+          const searchName = data.name.toLowerCase().trim();
+          return items.find(item => item.name.toLowerCase().trim() === searchName);
+        }
+        return null;
+      }),
+      catchError(() => of(null))
+    ).subscribe(existingItem => {
+      if (existingItem) {
+        // Item exists - go to detail view
+        this.statusMessage.set(`Found: ${existingItem.name}`);
+        setTimeout(() => {
+          this.router.navigate(['/items', existingItem.id]);
+        }, 300);
+      } else {
+        // Item doesn't exist - go to add form
+        this.statusMessage.set('New item - opening form...');
+        setTimeout(() => {
+          this.redirectToForm(data);
+        }, 300);
+      }
+    });
   }
 
   private redirectToForm(data: NfcTagData): void {
