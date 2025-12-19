@@ -25,6 +25,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'nfc',
+    loadComponent: () =>
+      import('./features/nfc/nfc-entry.component').then((m) => m.NfcEntryComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'dashboard',
     loadComponent: () =>
       import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
@@ -41,6 +47,11 @@ export const routes: Routes = [
       },
       {
         path: 'new',
+        loadComponent: () =>
+          import('./features/locations/location-form.component').then((m) => m.LocationFormComponent),
+      },
+      {
+        path: 'add',
         loadComponent: () =>
           import('./features/locations/location-form.component').then((m) => m.LocationFormComponent),
       },
@@ -77,6 +88,11 @@ export const routes: Routes = [
       },
       {
         path: 'new',
+        loadComponent: () =>
+          import('./features/items/item-form.component').then((m) => m.ItemFormComponent),
+      },
+      {
+        path: 'add',
         loadComponent: () =>
           import('./features/items/item-form.component').then((m) => m.ItemFormComponent),
       },

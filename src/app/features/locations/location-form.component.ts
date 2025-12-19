@@ -113,8 +113,28 @@ export class LocationFormComponent implements OnInit {
       this.isEdit.set(true);
       this.locationId.set(Number(id));
       this.loadLocation(Number(id));
+    } else {
+      // Pre-fill from query params (from NFC scan)
+      this.prefillFromQueryParams();
     }
     this.loadParentOptions();
+  }
+
+  private prefillFromQueryParams(): void {
+    const params = this.route.snapshot.queryParams;
+    if (params['name']) {
+      this.form.name = params['name'];
+    }
+    if (params['code']) {
+      // If there's a code, append it to description or use as name prefix
+      this.form.name = params['name'] || params['code'];
+    }
+    if (params['description']) {
+      this.form.description = params['description'];
+    }
+    if (params['parentId']) {
+      this.form.parentLocationId = parseInt(params['parentId'], 10);
+    }
   }
 
   private loadLocation(id: number): void {

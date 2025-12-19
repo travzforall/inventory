@@ -177,8 +177,36 @@ export class ItemFormComponent implements OnInit {
       this.isEdit.set(true);
       this.itemId.set(Number(id));
       this.loadItem(Number(id));
+    } else {
+      // Pre-fill from query params (from NFC scan)
+      this.prefillFromQueryParams();
     }
     this.loadLocations();
+  }
+
+  private prefillFromQueryParams(): void {
+    const params = this.route.snapshot.queryParams;
+    if (params['name']) {
+      this.form.name = params['name'];
+    }
+    if (params['sku']) {
+      this.form.sku = params['sku'];
+    }
+    if (params['description']) {
+      this.form.description = params['description'];
+    }
+    if (params['quantity']) {
+      this.form.quantity = parseInt(params['quantity'], 10) || 0;
+    }
+    if (params['minQuantity']) {
+      this.form.minQuantity = parseInt(params['minQuantity'], 10) || 0;
+    }
+    if (params['locationId']) {
+      this.form.currentLocationId = parseInt(params['locationId'], 10);
+    }
+    if (params['category']) {
+      this.tagsInput = params['category'];
+    }
   }
 
   private loadItem(id: number): void {
