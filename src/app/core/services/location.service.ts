@@ -33,28 +33,36 @@ export class LocationService {
     let imageGallery: string[] = [];
     let capacityRules: CapacityRule | null = null;
 
+    // Handle both snake_case and user field names
+    const imgGallery = row.image_gallery ?? (row as any)['image gallery'] ?? '';
+    const capRules = row.capacity_rules ?? (row as any)['capacity rules'] ?? '';
+    const parentLocationId = row.parent_location_id ?? (row as any)['parent location id'] ?? null;
+    const nfcTagId = row.nfc_tag_id ?? (row as any)['nfc tag id'] ?? null;
+    const createdAt = row.created_at ?? (row as any)['created at'] ?? '';
+    const updatedAt = row.updated_at ?? (row as any)['updated at'] ?? '';
+
     try {
-      imageGallery = row.image_gallery ? JSON.parse(row.image_gallery) : [];
+      imageGallery = imgGallery ? JSON.parse(imgGallery) : [];
     } catch {
-      imageGallery = row.image_gallery ? [row.image_gallery] : [];
+      imageGallery = imgGallery ? [imgGallery] : [];
     }
 
     try {
-      capacityRules = row.capacity_rules ? JSON.parse(row.capacity_rules) : null;
+      capacityRules = capRules ? JSON.parse(capRules) : null;
     } catch {
       capacityRules = null;
     }
 
     return {
       id: row.id,
-      name: row.name,
+      name: row.name || '',
       description: row.description || '',
-      parentLocationId: row.parent_location_id,
+      parentLocationId: parentLocationId ? Number(parentLocationId) : null,
       imageGallery,
-      nfcTagId: row.nfc_tag_id,
+      nfcTagId: nfcTagId ? Number(nfcTagId) : null,
       capacityRules,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      createdAt,
+      updatedAt,
     };
   }
 
@@ -115,19 +123,17 @@ export class LocationService {
   }
 
   getChildren(parentId: number): Observable<StorageLocation[]> {
-    return this.baserow
-      .getAll<BaserowLocation>(this.tableId, {
-        filters: [{ field: 'parent_location_id', type: 'equal', value: parentId }],
-      })
-      .pipe(map((res) => res.results.map((r) => this.mapFromBaserow(r))));
+    // Filter client-side since user_field_names changes filter syntax
+    return this.getAll().pipe(
+      map((locations) => locations.filter((loc) => loc.parentLocationId === parentId))
+    );
   }
 
   getRootLocations(): Observable<StorageLocation[]> {
-    return this.baserow
-      .getAll<BaserowLocation>(this.tableId, {
-        filters: [{ field: 'parent_location_id', type: 'empty', value: '' }],
-      })
-      .pipe(map((res) => res.results.map((r) => this.mapFromBaserow(r))));
+    // Filter client-side for locations with no parent
+    return this.getAll().pipe(
+      map((locations) => locations.filter((loc) => !loc.parentLocationId))
+    );
   }
 
   search(query: string): Observable<StorageLocation[]> {

@@ -41,18 +41,24 @@ export class InventoryItemService {
       tags = row.tags ? row.tags.split(',').map((t) => t.trim()) : [];
     }
 
+    // Handle field names (could be snake_case or user field names)
+    const currentLocationId = row.current_location_id ?? (row as any)['current location id'] ?? null;
+    const minQuantity = row.min_quantity ?? (row as any)['min quantity'] ?? 0;
+    const createdAt = row.created_at ?? (row as any)['created at'] ?? '';
+    const updatedAt = row.updated_at ?? (row as any)['updated at'] ?? '';
+
     return {
       id: row.id,
-      name: row.name,
-      sku: row.sku,
-      quantity: row.quantity || 0,
+      name: row.name || '',
+      sku: row.sku || '',
+      quantity: Number(row.quantity) || 0,
       images,
-      currentLocationId: row.current_location_id,
+      currentLocationId: currentLocationId ? Number(currentLocationId) : null,
       tags,
       description: row.description || '',
-      minQuantity: row.min_quantity || 0,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      minQuantity: Number(minQuantity) || 0,
+      createdAt,
+      updatedAt,
     };
   }
 
@@ -84,11 +90,11 @@ export class InventoryItemService {
   }
 
   getByLocationId(locationId: number): Observable<InventoryItem[]> {
-    return this.baserow
-      .getAll<BaserowItem>(this.tableId, {
-        filters: [{ field: 'current_location_id', type: 'equal', value: locationId }],
-      })
-      .pipe(map((res) => res.results.map((r) => this.mapFromBaserow(r))));
+    // Fetch all items and filter client-side since Baserow filter syntax
+    // with user_field_names can be tricky
+    return this.getAll().pipe(
+      map((items) => items.filter((item) => item.currentLocationId === locationId))
+    );
   }
 
   getBySku(sku: string): Observable<InventoryItem | undefined> {
