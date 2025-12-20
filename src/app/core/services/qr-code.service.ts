@@ -6,6 +6,14 @@ export interface QRCodeConfig {
   baseUrl: string;
   prefix: string;
   type: 'location' | 'item';
+  // Additional data fields for richer QR codes
+  category?: string;
+  description?: string;
+  parentLocation?: string;
+  defaultQuantity?: number;
+  unit?: string;
+  tags?: string[];
+  notes?: string;
 }
 
 export interface QRCodeItem {
@@ -55,7 +63,7 @@ export class QRCodeService {
 
     for (let i = 0; i < count; i++) {
       const id = this.generateUniqueId(config.prefix);
-      const url = `${config.baseUrl}/nfc?type=${config.type}&name=${encodeURIComponent(id)}`;
+      const url = this.buildQRCodeUrl(id, config);
 
       const dataUrl = await QRCode.toDataURL(url, {
         width: 300,
@@ -72,6 +80,45 @@ export class QRCodeService {
     }
 
     return codes;
+  }
+
+  /**
+   * Build QR code URL with all available data parameters
+   * Keeps URL under ~500 chars for reliable scanning
+   */
+  private buildQRCodeUrl(id: string, config: QRCodeConfig): string {
+    const params = new URLSearchParams();
+
+    // Required parameters
+    params.set('type', config.type);
+    params.set('name', id);
+
+    // Optional parameters - only add if provided
+    if (config.category) {
+      params.set('cat', config.category);
+    }
+    if (config.description) {
+      // Truncate description to keep URL reasonable
+      params.set('desc', config.description.substring(0, 100));
+    }
+    if (config.parentLocation) {
+      params.set('parent', config.parentLocation);
+    }
+    if (config.defaultQuantity !== undefined && config.defaultQuantity > 0) {
+      params.set('qty', config.defaultQuantity.toString());
+    }
+    if (config.unit) {
+      params.set('unit', config.unit);
+    }
+    if (config.tags && config.tags.length > 0) {
+      params.set('tags', config.tags.join(','));
+    }
+    if (config.notes) {
+      // Truncate notes to keep URL reasonable
+      params.set('notes', config.notes.substring(0, 50));
+    }
+
+    return `${config.baseUrl}/nfc?${params.toString()}`;
   }
 
   /**

@@ -89,9 +89,52 @@ import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-cod
                       placeholder="https://your-app.netlify.app"
                     />
                   </div>
+
+                  <!-- Category -->
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Category</span>
+                    </label>
+                    <select class="select select-bordered w-full" [(ngModel)]="category">
+                      <option value="">No category</option>
+                      @if (codeType === 'location') {
+                        <option value="warehouse">Warehouse</option>
+                        <option value="shelf">Shelf</option>
+                        <option value="bin">Bin</option>
+                        <option value="room">Room</option>
+                        <option value="zone">Zone</option>
+                        <option value="rack">Rack</option>
+                      } @else {
+                        <option value="electronics">Electronics</option>
+                        <option value="tools">Tools</option>
+                        <option value="consumables">Consumables</option>
+                        <option value="parts">Parts</option>
+                        <option value="equipment">Equipment</option>
+                        <option value="materials">Materials</option>
+                      }
+                    </select>
+                  </div>
+
+                  <!-- Parent Location (for location type) -->
+                  @if (codeType === 'location') {
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Parent Location ID</span>
+                      </label>
+                      <input
+                        type="text"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="parentLocation"
+                        placeholder="e.g., LOC-ABC123"
+                      />
+                      <label class="label">
+                        <span class="label-text-alt">Pre-fills parent when creating location</span>
+                      </label>
+                    </div>
+                  }
                 </div>
 
-                <!-- Right column: PDF settings -->
+                <!-- Right column: PDF settings + Additional Data -->
                 <div class="space-y-4">
                   <div class="form-control">
                     <label class="label">
@@ -160,6 +203,110 @@ import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-cod
                       <input type="checkbox" class="toggle toggle-primary" [(ngModel)]="showUrl" />
                     </label>
                   </div>
+                </div>
+              </div>
+
+              <!-- Additional Data Section -->
+              <div class="divider">
+                <span class="text-sm text-base-content/60">Additional Data (embedded in QR)</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Description -->
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Description</span>
+                  </label>
+                  <textarea
+                    class="textarea textarea-bordered w-full"
+                    [(ngModel)]="description"
+                    placeholder="Brief description (max 100 chars)"
+                    maxlength="100"
+                    rows="2"
+                  ></textarea>
+                  <label class="label">
+                    <span class="label-text-alt">{{ description.length }}/100 chars</span>
+                  </label>
+                </div>
+
+                <!-- Default Quantity (for items) -->
+                @if (codeType === 'item') {
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Default Quantity</span>
+                    </label>
+                    <input
+                      type="number"
+                      class="input input-bordered w-full"
+                      [(ngModel)]="defaultQuantity"
+                      min="0"
+                      placeholder="Pre-fill quantity on scan"
+                    />
+                  </div>
+                }
+
+                <!-- Unit -->
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Unit of Measure</span>
+                  </label>
+                  <select class="select select-bordered w-full" [(ngModel)]="unit">
+                    <option value="">No unit</option>
+                    <option value="pcs">Pieces (pcs)</option>
+                    <option value="kg">Kilograms (kg)</option>
+                    <option value="g">Grams (g)</option>
+                    <option value="l">Liters (L)</option>
+                    <option value="ml">Milliliters (mL)</option>
+                    <option value="m">Meters (m)</option>
+                    <option value="cm">Centimeters (cm)</option>
+                    <option value="box">Boxes</option>
+                    <option value="pack">Packs</option>
+                    <option value="roll">Rolls</option>
+                  </select>
+                </div>
+
+                <!-- Tags -->
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Tags</span>
+                  </label>
+                  <input
+                    type="text"
+                    class="input input-bordered w-full"
+                    [(ngModel)]="tagsInput"
+                    placeholder="comma-separated: fragile, heavy, flammable"
+                  />
+                  <label class="label">
+                    <span class="label-text-alt">Comma-separated list</span>
+                  </label>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-control md:col-span-2">
+                  <label class="label">
+                    <span class="label-text font-semibold">Notes</span>
+                  </label>
+                  <input
+                    type="text"
+                    class="input input-bordered w-full"
+                    [(ngModel)]="notes"
+                    placeholder="Short note (max 50 chars)"
+                    maxlength="50"
+                  />
+                  <label class="label">
+                    <span class="label-text-alt">{{ notes.length }}/50 chars</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- URL Preview -->
+              <div class="mt-4 p-3 bg-base-200 rounded-lg">
+                <div class="text-sm font-semibold mb-1">URL Preview:</div>
+                <div class="text-xs font-mono break-all text-base-content/70">
+                  {{ getUrlPreview() }}
+                </div>
+                <div class="text-xs mt-2 text-base-content/50">
+                  Estimated URL length: {{ getUrlPreview().length }} chars (recommended &lt; 500)
                 </div>
               </div>
 
@@ -279,7 +426,7 @@ export class QRGeneratorComponent {
   exporting = signal(false);
   generatedCodes = signal<QRCodeItem[]>([]);
 
-  // Form fields
+  // Form fields - Basic
   codeCount = 10;
   codeType: 'location' | 'item' = 'location';
   prefix = 'LOC';
@@ -291,14 +438,35 @@ export class QRGeneratorComponent {
   showLabel = true;
   showUrl = false;
 
+  // Form fields - Additional data
+  category = '';
+  parentLocation = '';
+  description = '';
+  defaultQuantity: number | undefined;
+  unit = '';
+  tagsInput = '';
+  notes = '';
+
   async generateCodes(): Promise<void> {
     this.generating.set(true);
 
     try {
+      const tags = this.tagsInput
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+
       const codes = await this.qrService.generateQRCodes(this.codeCount, {
         baseUrl: this.baseUrl,
         prefix: this.prefix || 'TAG',
         type: this.codeType,
+        category: this.category || undefined,
+        description: this.description || undefined,
+        parentLocation: this.parentLocation || undefined,
+        defaultQuantity: this.defaultQuantity,
+        unit: this.unit || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        notes: this.notes || undefined,
       });
 
       this.generatedCodes.set(codes);
@@ -308,6 +476,25 @@ export class QRGeneratorComponent {
     } finally {
       this.generating.set(false);
     }
+  }
+
+  getUrlPreview(): string {
+    const params = new URLSearchParams();
+    params.set('type', this.codeType);
+    params.set('name', `${this.prefix || 'TAG'}-XXXXX`);
+
+    if (this.category) params.set('cat', this.category);
+    if (this.description) params.set('desc', this.description.substring(0, 100));
+    if (this.parentLocation) params.set('parent', this.parentLocation);
+    if (this.defaultQuantity) params.set('qty', this.defaultQuantity.toString());
+    if (this.unit) params.set('unit', this.unit);
+    if (this.tagsInput) {
+      const tags = this.tagsInput.split(',').map((t) => t.trim()).filter((t) => t).join(',');
+      if (tags) params.set('tags', tags);
+    }
+    if (this.notes) params.set('notes', this.notes.substring(0, 50));
+
+    return `${this.baseUrl}/nfc?${params.toString()}`;
   }
 
   async downloadPDF(): Promise<void> {
@@ -358,11 +545,16 @@ export class QRGeneratorComponent {
   downloadCSV(): void {
     const codes = this.generatedCodes();
     const csv = [
-      ['ID', 'Type', 'URL', 'Created'],
+      ['ID', 'Type', 'Category', 'Description', 'Unit', 'Tags', 'Notes', 'URL', 'Created'],
       ...codes.map((code) => [
         code.name,
         this.codeType,
-        code.url,
+        this.category || '',
+        `"${(this.description || '').replace(/"/g, '""')}"`,
+        this.unit || '',
+        `"${this.tagsInput || ''}"`,
+        `"${(this.notes || '').replace(/"/g, '""')}"`,
+        `"${code.url}"`,
         new Date().toISOString(),
       ]),
     ]

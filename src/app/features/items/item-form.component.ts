@@ -231,8 +231,31 @@ export class ItemFormComponent implements OnInit {
     if (params['locationId']) {
       this.form.currentLocationId = parseInt(params['locationId'], 10);
     }
+
+    // Build tags from category and tags params
+    const tagParts: string[] = [];
     if (params['category']) {
-      this.tagsInput = params['category'];
+      tagParts.push(params['category']);
+    }
+    if (params['tags']) {
+      tagParts.push(params['tags']);
+    }
+    if (tagParts.length > 0) {
+      this.tagsInput = tagParts.join(', ');
+    }
+
+    // Append notes to description if provided
+    if (params['notes'] && params['notes'].trim()) {
+      this.form.description = this.form.description
+        ? `${this.form.description}\n\nNotes: ${params['notes']}`
+        : `Notes: ${params['notes']}`;
+    }
+
+    // If unit is provided, append to description or could be used for a future field
+    if (params['unit']) {
+      this.form.description = this.form.description
+        ? `${this.form.description}\nUnit: ${params['unit']}`
+        : `Unit: ${params['unit']}`;
     }
   }
 

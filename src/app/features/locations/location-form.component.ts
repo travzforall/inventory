@@ -135,7 +135,30 @@ export class LocationFormComponent implements OnInit {
     if (params['parentId']) {
       this.form.parentLocationId = parseInt(params['parentId'], 10);
     }
+
+    // Handle category - add to description for locations
+    if (params['category']) {
+      const categoryNote = `Type: ${params['category']}`;
+      this.form.description = this.form.description
+        ? `${categoryNote}\n${this.form.description}`
+        : categoryNote;
+    }
+
+    // Handle notes
+    if (params['notes'] && params['notes'].trim()) {
+      this.form.description = this.form.description
+        ? `${this.form.description}\n\nNotes: ${params['notes']}`
+        : `Notes: ${params['notes']}`;
+    }
+
+    // Handle parentLocation string (search for matching location)
+    if (params['parentLocation'] && !params['parentId']) {
+      // Store it for later lookup once locations are loaded
+      this.pendingParentLookup = params['parentLocation'];
+    }
   }
+
+  private pendingParentLookup: string | null = null;
 
   private loadLocation(id: number): void {
     this.locationService.getById(id).subscribe({
@@ -157,6 +180,18 @@ export class LocationFormComponent implements OnInit {
         this.availableParents.set(
           id ? locations.filter((l) => l.id !== id) : locations
         );
+
+        // Handle pending parent lookup from QR code
+        if (this.pendingParentLookup) {
+          const searchName = this.pendingParentLookup.toLowerCase().trim();
+          const matchingParent = locations.find(
+            (loc) => loc.name.toLowerCase().trim() === searchName
+          );
+          if (matchingParent) {
+            this.form.parentLocationId = matchingParent.id;
+          }
+          this.pendingParentLookup = null;
+        }
       },
     });
   }

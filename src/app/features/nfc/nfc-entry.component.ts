@@ -13,9 +13,13 @@ export interface NfcTagData {
   quantity?: number;
   description?: string;
   parentId?: number;
+  parentLocation?: string;
   locationId?: number;
   minQuantity?: number;
   category?: string;
+  unit?: string;
+  tags?: string;
+  notes?: string;
 }
 
 @Component({
@@ -92,24 +96,35 @@ export class NfcEntryComponent implements OnInit {
       return null;
     }
 
+    // Support both full names and short names from QR codes
+    // QR codes use: cat, desc, qty, parent, unit, tags, notes
+    // Forms expect: category, description, quantity, parentId, etc.
     const data: NfcTagData = {
       type: type as 'location' | 'item',
       name: params['name'],
       code: params['code'],
-      description: params['description'],
+      description: params['description'] || params['desc'],
+      category: params['category'] || params['cat'],
+      unit: params['unit'],
+      tags: params['tags'],
+      notes: params['notes'],
     };
 
     if (type === 'location') {
+      // Support both parentId (number) and parent (string name from QR)
       if (params['parentId']) {
         data.parentId = parseInt(params['parentId'], 10);
+      }
+      if (params['parent']) {
+        data.parentLocation = params['parent'];
       }
     }
 
     if (type === 'item') {
       data.sku = params['sku'];
-      data.category = params['category'];
-      if (params['quantity']) {
-        data.quantity = parseInt(params['quantity'], 10);
+      // Quantity supports both 'quantity' and 'qty' (from QR codes)
+      if (params['quantity'] || params['qty']) {
+        data.quantity = parseInt(params['quantity'] || params['qty'], 10);
       }
       if (params['minQuantity']) {
         data.minQuantity = parseInt(params['minQuantity'], 10);
@@ -194,17 +209,21 @@ export class NfcEntryComponent implements OnInit {
   private redirectToForm(data: NfcTagData): void {
     const queryParams: Record<string, string | number> = {};
 
-    // Build query params from tag data
+    // Build query params from tag data - pass all available fields
     if (data.name) queryParams['name'] = data.name;
     if (data.code) queryParams['code'] = data.code;
     if (data.description) queryParams['description'] = data.description;
+    if (data.category) queryParams['category'] = data.category;
+    if (data.unit) queryParams['unit'] = data.unit;
+    if (data.tags) queryParams['tags'] = data.tags;
+    if (data.notes) queryParams['notes'] = data.notes;
 
     if (data.type === 'location') {
       if (data.parentId) queryParams['parentId'] = data.parentId;
+      if (data.parentLocation) queryParams['parentLocation'] = data.parentLocation;
       this.router.navigate(['/locations/add'], { queryParams });
     } else {
       if (data.sku) queryParams['sku'] = data.sku;
-      if (data.category) queryParams['category'] = data.category;
       if (data.quantity) queryParams['quantity'] = data.quantity;
       if (data.minQuantity) queryParams['minQuantity'] = data.minQuantity;
       if (data.locationId) queryParams['locationId'] = data.locationId;
