@@ -14,6 +14,8 @@ interface BaserowItem {
   tags: string;
   description: string;
   min_quantity: number;
+  unit: string;
+  notes: string;
   created_at: string;
   updated_at: string;
 }
@@ -47,6 +49,10 @@ export class InventoryItemService {
     const createdAt = row.created_at ?? (row as any)['created at'] ?? '';
     const updatedAt = row.updated_at ?? (row as any)['updated at'] ?? '';
 
+    // Handle unit and notes fields
+    const unit = row.unit ?? (row as any)['unit'] ?? '';
+    const notes = row.notes ?? (row as any)['notes'] ?? '';
+
     return {
       id: row.id,
       name: row.name || '',
@@ -57,6 +63,8 @@ export class InventoryItemService {
       tags,
       description: row.description || '',
       minQuantity: Number(minQuantity) || 0,
+      unit: unit || '',
+      notes: notes || '',
       createdAt,
       updatedAt,
     };
@@ -74,6 +82,8 @@ export class InventoryItemService {
       mapped.description = data.description;
     if ('minQuantity' in data && data.minQuantity !== undefined)
       mapped.min_quantity = data.minQuantity;
+    if ('unit' in data && data.unit !== undefined) mapped.unit = data.unit;
+    if ('notes' in data && data.notes !== undefined) mapped.notes = data.notes;
     return mapped;
   }
 

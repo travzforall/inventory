@@ -8,6 +8,8 @@ export interface InventoryItem {
   tags: string[]; // categories, attributes, flags
   description: string;
   minQuantity: number; // For low-stock alerts
+  unit: string; // Unit of measure (pcs, kg, box, etc.)
+  notes: string; // Additional notes
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +23,8 @@ export interface InventoryItemCreate {
   tags?: string[];
   description?: string;
   minQuantity?: number;
+  unit?: string;
+  notes?: string;
 }
 
 export interface InventoryItemUpdate {
@@ -32,6 +36,8 @@ export interface InventoryItemUpdate {
   tags?: string[];
   description?: string;
   minQuantity?: number;
+  unit?: string;
+  notes?: string;
 }
 
 export interface ItemWithLocation extends InventoryItem {

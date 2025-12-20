@@ -136,17 +136,55 @@ import { CameraCaptureComponent } from '../../shared/components/camera-capture.c
                 </div>
               </div>
 
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div class="form-control w-full">
+                  <label class="label">
+                    <span class="label-text">Unit of Measure</span>
+                  </label>
+                  <select
+                    class="select select-bordered w-full"
+                    [(ngModel)]="form.unit"
+                    name="unit"
+                  >
+                    <option value="">No unit</option>
+                    <option value="pcs">Pieces (pcs)</option>
+                    <option value="kg">Kilograms (kg)</option>
+                    <option value="g">Grams (g)</option>
+                    <option value="l">Liters (L)</option>
+                    <option value="ml">Milliliters (mL)</option>
+                    <option value="m">Meters (m)</option>
+                    <option value="cm">Centimeters (cm)</option>
+                    <option value="box">Boxes</option>
+                    <option value="pack">Packs</option>
+                    <option value="roll">Rolls</option>
+                  </select>
+                </div>
+
+                <div class="form-control w-full">
+                  <label class="label">
+                    <span class="label-text">Tags (comma-separated)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., electronics, tools, office"
+                    class="input input-bordered w-full"
+                    [(ngModel)]="tagsInput"
+                    name="tags"
+                  />
+                </div>
+              </div>
+
               <div class="form-control w-full mt-4">
                 <label class="label">
-                  <span class="label-text">Tags (comma-separated)</span>
+                  <span class="label-text">Notes</span>
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g., electronics, tools, office"
-                  class="input input-bordered w-full"
-                  [(ngModel)]="tagsInput"
-                  name="tags"
-                />
+                <textarea
+                  placeholder="Additional notes"
+                  class="textarea textarea-bordered w-full"
+                  [(ngModel)]="form.notes"
+                  name="notes"
+                  rows="2"
+                ></textarea>
               </div>
 
               <div class="divider"></div>
@@ -196,6 +234,8 @@ export class ItemFormComponent implements OnInit {
     currentLocationId: undefined,
     tags: [],
     images: [],
+    unit: '',
+    notes: '',
   };
 
   ngOnInit(): void {
@@ -234,8 +274,17 @@ export class ItemFormComponent implements OnInit {
       this.form.currentLocationId = parseInt(params['locationId'], 10);
     }
 
-    // Build tags from category, tags, unit, and notes
-    // Since there's no dedicated unit field, include it as a tag
+    // Fill unit field directly
+    if (params['unit']) {
+      this.form.unit = params['unit'];
+    }
+
+    // Fill notes field directly
+    if (params['notes']) {
+      this.form.notes = params['notes'];
+    }
+
+    // Build tags from category and tags params only
     const tagParts: string[] = [];
     if (params['category']) {
       tagParts.push(params['category']);
@@ -247,19 +296,8 @@ export class ItemFormComponent implements OnInit {
         if (trimmed) tagParts.push(trimmed);
       });
     }
-    if (params['unit']) {
-      tagParts.push(params['unit']);
-    }
     if (tagParts.length > 0) {
       this.tagsInput = tagParts.join(', ');
-    }
-
-    // Only add notes to description if there's actual notes content
-    if (params['notes'] && params['notes'].trim()) {
-      const notes = params['notes'].trim();
-      this.form.description = this.form.description
-        ? `${this.form.description}\n\n${notes}`
-        : notes;
     }
   }
 
@@ -275,6 +313,8 @@ export class ItemFormComponent implements OnInit {
           currentLocationId: item.currentLocationId ?? undefined,
           tags: item.tags,
           images: item.images,
+          unit: item.unit || '',
+          notes: item.notes || '',
         };
         this.tagsInput = item.tags.join(', ');
         this.images = item.images;
