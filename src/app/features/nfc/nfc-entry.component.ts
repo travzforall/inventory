@@ -15,11 +15,18 @@ export interface NfcTagData {
   parentId?: number;
   parentLocation?: string;
   locationId?: number;
+  locationName?: string;
   minQuantity?: number;
   category?: string;
   unit?: string;
   tags?: string;
   notes?: string;
+  manageInventory?: boolean;
+  // Location-specific: capacity rules
+  maxItems?: number;
+  maxWeight?: number;
+  weightUnit?: string;
+  allowedCategories?: string;
 }
 
 @Component({
@@ -118,6 +125,19 @@ export class NfcEntryComponent implements OnInit {
       if (params['parent']) {
         data.parentLocation = params['parent'];
       }
+      // Capacity rules
+      if (params['maxItems']) {
+        data.maxItems = parseInt(params['maxItems'], 10);
+      }
+      if (params['maxWeight'] || params['maxWt']) {
+        data.maxWeight = parseInt(params['maxWeight'] || params['maxWt'], 10);
+      }
+      if (params['weightUnit'] || params['wtUnit']) {
+        data.weightUnit = params['weightUnit'] || params['wtUnit'];
+      }
+      if (params['allowedCategories'] || params['allowCat']) {
+        data.allowedCategories = params['allowedCategories'] || params['allowCat'];
+      }
     }
 
     if (type === 'item') {
@@ -126,11 +146,21 @@ export class NfcEntryComponent implements OnInit {
       if (params['quantity'] || params['qty']) {
         data.quantity = parseInt(params['quantity'] || params['qty'], 10);
       }
-      if (params['minQuantity']) {
-        data.minQuantity = parseInt(params['minQuantity'], 10);
+      // Min quantity supports both 'minQuantity' and 'minQty' (from QR codes)
+      if (params['minQuantity'] || params['minQty']) {
+        data.minQuantity = parseInt(params['minQuantity'] || params['minQty'], 10);
       }
-      if (params['locationId']) {
-        data.locationId = parseInt(params['locationId'], 10);
+      // Location: support locationId, locId, and loc (name)
+      if (params['locationId'] || params['locId']) {
+        data.locationId = parseInt(params['locationId'] || params['locId'], 10);
+      }
+      if (params['locationName'] || params['loc']) {
+        data.locationName = params['locationName'] || params['loc'];
+      }
+      // Handle manageInventory (support 'manageInventory', 'manage', 'inv')
+      const manageVal = params['manageInventory'] ?? params['manage'] ?? params['inv'];
+      if (manageVal !== undefined) {
+        data.manageInventory = manageVal === 'true' || manageVal === '1';
       }
     }
 
@@ -221,12 +251,18 @@ export class NfcEntryComponent implements OnInit {
     if (data.type === 'location') {
       if (data.parentId) queryParams['parentId'] = data.parentId;
       if (data.parentLocation) queryParams['parentLocation'] = data.parentLocation;
+      if (data.maxItems) queryParams['maxItems'] = data.maxItems;
+      if (data.maxWeight) queryParams['maxWeight'] = data.maxWeight;
+      if (data.weightUnit) queryParams['weightUnit'] = data.weightUnit;
+      if (data.allowedCategories) queryParams['allowedCategories'] = data.allowedCategories;
       this.router.navigate(['/locations/add'], { queryParams });
     } else {
       if (data.sku) queryParams['sku'] = data.sku;
       if (data.quantity) queryParams['quantity'] = data.quantity;
       if (data.minQuantity) queryParams['minQuantity'] = data.minQuantity;
       if (data.locationId) queryParams['locationId'] = data.locationId;
+      if (data.locationName) queryParams['locationName'] = data.locationName;
+      if (data.manageInventory !== undefined) queryParams['manageInventory'] = data.manageInventory ? 'true' : 'false';
       this.router.navigate(['/items/add'], { queryParams });
     }
   }

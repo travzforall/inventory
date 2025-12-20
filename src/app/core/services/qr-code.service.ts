@@ -10,10 +10,21 @@ export interface QRCodeConfig {
   category?: string;
   description?: string;
   parentLocation?: string;
+  sku?: string;
   defaultQuantity?: number;
+  minQuantity?: number;
   unit?: string;
   tags?: string[];
   notes?: string;
+  manageInventory?: boolean;
+  // Item-specific: pre-assign to location
+  defaultLocationId?: number;
+  defaultLocationName?: string;
+  // Location-specific: capacity rules
+  maxItems?: number;
+  maxWeight?: number;
+  weightUnit?: 'kg' | 'lb';
+  allowedCategories?: string[];
 }
 
 export interface QRCodeItem {
@@ -104,8 +115,14 @@ export class QRCodeService {
     if (config.parentLocation) {
       params.set('parent', config.parentLocation);
     }
+    if (config.sku) {
+      params.set('sku', config.sku);
+    }
     if (config.defaultQuantity !== undefined && config.defaultQuantity > 0) {
       params.set('qty', config.defaultQuantity.toString());
+    }
+    if (config.minQuantity !== undefined && config.minQuantity > 0) {
+      params.set('minQty', config.minQuantity.toString());
     }
     if (config.unit) {
       params.set('unit', config.unit);
@@ -116,6 +133,29 @@ export class QRCodeService {
     if (config.notes) {
       // Truncate notes to keep URL reasonable
       params.set('notes', config.notes.substring(0, 50));
+    }
+    if (config.manageInventory !== undefined) {
+      params.set('inv', config.manageInventory ? '1' : '0');
+    }
+    // Item-specific: default location
+    if (config.defaultLocationId) {
+      params.set('locId', config.defaultLocationId.toString());
+    }
+    if (config.defaultLocationName) {
+      params.set('loc', config.defaultLocationName);
+    }
+    // Location-specific: capacity rules
+    if (config.maxItems !== undefined && config.maxItems > 0) {
+      params.set('maxItems', config.maxItems.toString());
+    }
+    if (config.maxWeight !== undefined && config.maxWeight > 0) {
+      params.set('maxWt', config.maxWeight.toString());
+    }
+    if (config.weightUnit) {
+      params.set('wtUnit', config.weightUnit);
+    }
+    if (config.allowedCategories && config.allowedCategories.length > 0) {
+      params.set('allowCat', config.allowedCategories.join(','));
     }
 
     return `${config.baseUrl}/nfc?${params.toString()}`;

@@ -123,44 +123,59 @@ export class LocationFormComponent implements OnInit {
   private prefillFromQueryParams(): void {
     const params = this.route.snapshot.queryParams;
 
+    // Helper to get param with fallback short form
+    const getParam = (full: string, short?: string): string | undefined => {
+      return params[full] || (short ? params[short] : undefined);
+    };
+
     // Fill name - prefer name param, fall back to code
-    if (params['name']) {
-      this.form.name = params['name'];
-    } else if (params['code']) {
-      this.form.name = params['code'];
+    const name = getParam('name');
+    const code = getParam('code');
+    if (name) {
+      this.form.name = name;
+    } else if (code) {
+      this.form.name = code;
     }
 
-    // Fill description directly from param
-    if (params['description']) {
-      this.form.description = params['description'];
+    // Fill description: 'description' or 'desc'
+    const description = getParam('description', 'desc');
+    if (description) {
+      this.form.description = description;
     }
 
     // Fill parent location ID
-    if (params['parentId']) {
-      this.form.parentLocationId = parseInt(params['parentId'], 10);
+    const parentId = getParam('parentId');
+    if (parentId) {
+      this.form.parentLocationId = parseInt(parentId, 10);
     }
+
+    // Get category and notes (support short forms)
+    const category = getParam('category', 'cat');
+    const notes = getParam('notes');
 
     // Build description from category and notes if no description provided
     // Only add these if there's no explicit description
-    if (!params['description']) {
+    if (!description) {
       const descParts: string[] = [];
-      if (params['category']) {
-        descParts.push(`Type: ${params['category']}`);
+      if (category) {
+        descParts.push(`Type: ${category}`);
       }
-      if (params['notes'] && params['notes'].trim()) {
-        descParts.push(params['notes'].trim());
+      if (notes && notes.trim()) {
+        descParts.push(notes.trim());
       }
       if (descParts.length > 0) {
         this.form.description = descParts.join('\n');
       }
-    } else if (params['notes'] && params['notes'].trim()) {
+    } else if (notes && notes.trim()) {
       // If there's a description AND notes, append notes
-      this.form.description = `${this.form.description}\n\n${params['notes'].trim()}`;
+      this.form.description = `${this.form.description}\n\n${notes.trim()}`;
     }
 
     // Handle parentLocation string (search for matching location)
-    if (params['parentLocation'] && !params['parentId']) {
-      this.pendingParentLookup = params['parentLocation'];
+    // Support both 'parentLocation' and 'parent' (short form from QR)
+    const parentLocation = getParam('parentLocation', 'parent');
+    if (parentLocation && !parentId) {
+      this.pendingParentLookup = parentLocation;
     }
   }
 

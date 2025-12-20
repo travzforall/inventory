@@ -1,8 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-code.service';
+import { LocationService } from '../../core/services';
+import { StorageLocation } from '../../core/models';
 
 @Component({
   selector: 'app-qr-generator',
@@ -56,7 +58,7 @@ import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-cod
                     <label class="label">
                       <span class="label-text font-semibold">Code Type</span>
                     </label>
-                    <select class="select select-bordered w-full" [(ngModel)]="codeType">
+                    <select class="select select-bordered w-full" [(ngModel)]="codeType" (ngModelChange)="onCodeTypeChange($event)">
                       <option value="location">Location Tags</option>
                       <option value="item">Item Tags</option>
                     </select>
@@ -90,36 +92,26 @@ import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-cod
                     />
                   </div>
 
-                  <!-- Category -->
-                  <div class="form-control">
-                    <label class="label">
-                      <span class="label-text font-semibold">Category</span>
-                    </label>
-                    <select class="select select-bordered w-full" [(ngModel)]="category">
-                      <option value="">No category</option>
-                      @if (codeType === 'location') {
+                  <!-- Parent Location (for location type) -->
+                  @if (codeType === 'location') {
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Location Category</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="category">
+                        <option value="">No category</option>
                         <option value="warehouse">Warehouse</option>
                         <option value="shelf">Shelf</option>
                         <option value="bin">Bin</option>
                         <option value="room">Room</option>
                         <option value="zone">Zone</option>
                         <option value="rack">Rack</option>
-                      } @else {
-                        <option value="electronics">Electronics</option>
-                        <option value="tools">Tools</option>
-                        <option value="consumables">Consumables</option>
-                        <option value="parts">Parts</option>
-                        <option value="equipment">Equipment</option>
-                        <option value="materials">Materials</option>
-                      }
-                    </select>
-                  </div>
+                      </select>
+                    </div>
 
-                  <!-- Parent Location (for location type) -->
-                  @if (codeType === 'location') {
                     <div class="form-control">
                       <label class="label">
-                        <span class="label-text font-semibold">Parent Location ID</span>
+                        <span class="label-text font-semibold">Parent Location</span>
                       </label>
                       <input
                         type="text"
@@ -129,6 +121,173 @@ import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-cod
                       />
                       <label class="label">
                         <span class="label-text-alt">Pre-fills parent when creating location</span>
+                      </label>
+                    </div>
+
+                    <div class="divider text-xs text-base-content/50">Capacity Rules</div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Max Items</span>
+                      </label>
+                      <input
+                        type="number"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="maxItems"
+                        min="0"
+                        placeholder="Maximum items allowed"
+                      />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                      <div class="form-control">
+                        <label class="label">
+                          <span class="label-text font-semibold">Max Weight</span>
+                        </label>
+                        <input
+                          type="number"
+                          class="input input-bordered w-full"
+                          [(ngModel)]="maxWeight"
+                          min="0"
+                          placeholder="Weight limit"
+                        />
+                      </div>
+                      <div class="form-control">
+                        <label class="label">
+                          <span class="label-text font-semibold">Unit</span>
+                        </label>
+                        <select class="select select-bordered w-full" [(ngModel)]="weightUnit">
+                          <option value="">-</option>
+                          <option value="kg">kg</option>
+                          <option value="lb">lb</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Allowed Categories</span>
+                      </label>
+                      <input
+                        type="text"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="allowedCategoriesInput"
+                        placeholder="electronics, tools, parts"
+                      />
+                      <label class="label">
+                        <span class="label-text-alt">Comma-separated list of allowed item categories</span>
+                      </label>
+                    </div>
+                  }
+
+                  <!-- Item-specific fields -->
+                  @if (codeType === 'item') {
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">SKU</span>
+                      </label>
+                      <input
+                        type="text"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="sku"
+                        placeholder="e.g., ITEM-001"
+                      />
+                      <label class="label">
+                        <span class="label-text-alt">Pre-fills SKU when creating item</span>
+                      </label>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Category</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="category">
+                        <option value="">No category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="tools">Tools</option>
+                        <option value="office">Office Supplies</option>
+                        <option value="furniture">Furniture</option>
+                        <option value="consumables">Consumables</option>
+                        <option value="equipment">Equipment</option>
+                        <option value="parts">Parts & Components</option>
+                        <option value="packaging">Packaging</option>
+                        <option value="safety">Safety & PPE</option>
+                        <option value="cleaning">Cleaning Supplies</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Default Quantity</span>
+                      </label>
+                      <input
+                        type="number"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="defaultQuantity"
+                        min="0"
+                        placeholder="Pre-fill quantity on scan"
+                      />
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Min Quantity (Low Stock)</span>
+                      </label>
+                      <input
+                        type="number"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="minQuantity"
+                        min="0"
+                        placeholder="Low stock alert threshold"
+                      />
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Unit of Measure</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="unit">
+                        <option value="">No unit</option>
+                        <option value="pcs">Pieces (pcs)</option>
+                        <option value="kg">Kilograms (kg)</option>
+                        <option value="g">Grams (g)</option>
+                        <option value="l">Liters (L)</option>
+                        <option value="ml">Milliliters (mL)</option>
+                        <option value="m">Meters (m)</option>
+                        <option value="cm">Centimeters (cm)</option>
+                        <option value="box">Boxes</option>
+                        <option value="pack">Packs</option>
+                        <option value="roll">Rolls</option>
+                      </select>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Default Location</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="defaultLocationId">
+                        <option [ngValue]="undefined">No default location</option>
+                        @for (loc of locations(); track loc.id) {
+                          <option [ngValue]="loc.id">{{ loc.name }}</option>
+                        }
+                      </select>
+                      <label class="label">
+                        <span class="label-text-alt">Pre-assign items to this location</span>
+                      </label>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label cursor-pointer justify-start gap-4">
+                        <input
+                          type="checkbox"
+                          class="toggle toggle-primary"
+                          [(ngModel)]="manageInventory"
+                        />
+                        <span class="label-text font-semibold">Manage Inventory</span>
+                      </label>
+                      <label class="label">
+                        <span class="label-text-alt">Track quantity and low-stock alerts</span>
                       </label>
                     </div>
                   }
@@ -227,42 +386,6 @@ import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-cod
                   <label class="label">
                     <span class="label-text-alt">{{ description.length }}/100 chars</span>
                   </label>
-                </div>
-
-                <!-- Default Quantity (for items) -->
-                @if (codeType === 'item') {
-                  <div class="form-control">
-                    <label class="label">
-                      <span class="label-text font-semibold">Default Quantity</span>
-                    </label>
-                    <input
-                      type="number"
-                      class="input input-bordered w-full"
-                      [(ngModel)]="defaultQuantity"
-                      min="0"
-                      placeholder="Pre-fill quantity on scan"
-                    />
-                  </div>
-                }
-
-                <!-- Unit -->
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Unit of Measure</span>
-                  </label>
-                  <select class="select select-bordered w-full" [(ngModel)]="unit">
-                    <option value="">No unit</option>
-                    <option value="pcs">Pieces (pcs)</option>
-                    <option value="kg">Kilograms (kg)</option>
-                    <option value="g">Grams (g)</option>
-                    <option value="l">Liters (L)</option>
-                    <option value="ml">Milliliters (mL)</option>
-                    <option value="m">Meters (m)</option>
-                    <option value="cm">Centimeters (cm)</option>
-                    <option value="box">Boxes</option>
-                    <option value="pack">Packs</option>
-                    <option value="roll">Rolls</option>
-                  </select>
                 </div>
 
                 <!-- Tags -->
@@ -417,14 +540,26 @@ import { QRCodeService, QRCodeItem, PDFConfig } from '../../core/services/qr-cod
     </div>
   `,
 })
-export class QRGeneratorComponent {
+export class QRGeneratorComponent implements OnInit {
   private router = inject(Router);
   private qrService = inject(QRCodeService);
+  private locationService = inject(LocationService);
 
   step = signal(1);
   generating = signal(false);
   exporting = signal(false);
   generatedCodes = signal<QRCodeItem[]>([]);
+  locations = signal<StorageLocation[]>([]);
+
+  ngOnInit(): void {
+    this.loadLocations();
+  }
+
+  private loadLocations(): void {
+    this.locationService.getAll().subscribe({
+      next: (locations) => this.locations.set(locations),
+    });
+  }
 
   // Form fields - Basic
   codeCount = 10;
@@ -441,11 +576,43 @@ export class QRGeneratorComponent {
   // Form fields - Additional data
   category = '';
   parentLocation = '';
+  sku = '';
   description = '';
   defaultQuantity: number | undefined;
+  minQuantity: number | undefined;
+  manageInventory = true;
   unit = '';
   tagsInput = '';
   notes = '';
+  // Item-specific: default location
+  defaultLocationId: number | undefined;
+  // Location-specific: capacity rules
+  maxItems: number | undefined;
+  maxWeight: number | undefined;
+  weightUnit: 'kg' | 'lb' | '' = '';
+  allowedCategoriesInput = '';
+
+  onCodeTypeChange(type: 'location' | 'item'): void {
+    // Update prefix based on code type
+    if (type === 'location') {
+      this.prefix = 'LOC';
+    } else {
+      this.prefix = 'ITEM';
+    }
+    // Clear type-specific fields when switching
+    this.category = '';
+    this.parentLocation = '';
+    this.sku = '';
+    this.defaultQuantity = undefined;
+    this.minQuantity = undefined;
+    this.unit = '';
+    this.manageInventory = true;
+    this.defaultLocationId = undefined;
+    this.maxItems = undefined;
+    this.maxWeight = undefined;
+    this.weightUnit = '';
+    this.allowedCategoriesInput = '';
+  }
 
   async generateCodes(): Promise<void> {
     this.generating.set(true);
@@ -456,6 +623,17 @@ export class QRGeneratorComponent {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
+      // Parse allowed categories for locations
+      const allowedCategories = this.allowedCategoriesInput
+        .split(',')
+        .map((c) => c.trim())
+        .filter((c) => c.length > 0);
+
+      // Get location name for item default location
+      const defaultLocationName = this.defaultLocationId
+        ? this.locations().find((l) => l.id === this.defaultLocationId)?.name
+        : undefined;
+
       const codes = await this.qrService.generateQRCodes(this.codeCount, {
         baseUrl: this.baseUrl,
         prefix: this.prefix || 'TAG',
@@ -463,10 +641,21 @@ export class QRGeneratorComponent {
         category: this.category || undefined,
         description: this.description || undefined,
         parentLocation: this.parentLocation || undefined,
-        defaultQuantity: this.defaultQuantity,
-        unit: this.unit || undefined,
+        sku: this.codeType === 'item' ? (this.sku || undefined) : undefined,
+        defaultQuantity: this.codeType === 'item' ? this.defaultQuantity : undefined,
+        minQuantity: this.codeType === 'item' ? this.minQuantity : undefined,
+        manageInventory: this.codeType === 'item' ? this.manageInventory : undefined,
+        unit: this.codeType === 'item' ? (this.unit || undefined) : undefined,
         tags: tags.length > 0 ? tags : undefined,
         notes: this.notes || undefined,
+        // Item-specific: default location
+        defaultLocationId: this.codeType === 'item' ? this.defaultLocationId : undefined,
+        defaultLocationName: this.codeType === 'item' ? defaultLocationName : undefined,
+        // Location-specific: capacity rules
+        maxItems: this.codeType === 'location' ? this.maxItems : undefined,
+        maxWeight: this.codeType === 'location' ? this.maxWeight : undefined,
+        weightUnit: this.codeType === 'location' && this.weightUnit ? this.weightUnit : undefined,
+        allowedCategories: this.codeType === 'location' && allowedCategories.length > 0 ? allowedCategories : undefined,
       });
 
       this.generatedCodes.set(codes);
@@ -486,8 +675,31 @@ export class QRGeneratorComponent {
     if (this.category) params.set('cat', this.category);
     if (this.description) params.set('desc', this.description.substring(0, 100));
     if (this.parentLocation) params.set('parent', this.parentLocation);
-    if (this.defaultQuantity) params.set('qty', this.defaultQuantity.toString());
-    if (this.unit) params.set('unit', this.unit);
+
+    // Item-specific params
+    if (this.codeType === 'item') {
+      if (this.sku) params.set('sku', this.sku);
+      if (this.defaultQuantity) params.set('qty', this.defaultQuantity.toString());
+      if (this.minQuantity) params.set('minQty', this.minQuantity.toString());
+      if (this.unit) params.set('unit', this.unit);
+      params.set('inv', this.manageInventory ? '1' : '0');
+      if (this.defaultLocationId) {
+        const loc = this.locations().find((l) => l.id === this.defaultLocationId);
+        if (loc) params.set('loc', loc.name);
+      }
+    }
+
+    // Location-specific params
+    if (this.codeType === 'location') {
+      if (this.maxItems) params.set('maxItems', this.maxItems.toString());
+      if (this.maxWeight) params.set('maxWt', this.maxWeight.toString());
+      if (this.weightUnit) params.set('wtUnit', this.weightUnit);
+      if (this.allowedCategoriesInput) {
+        const cats = this.allowedCategoriesInput.split(',').map((c) => c.trim()).filter((c) => c).join(',');
+        if (cats) params.set('allowCat', cats);
+      }
+    }
+
     if (this.tagsInput) {
       const tags = this.tagsInput.split(',').map((t) => t.trim()).filter((t) => t).join(',');
       if (tags) params.set('tags', tags);
@@ -545,15 +757,19 @@ export class QRGeneratorComponent {
   downloadCSV(): void {
     const codes = this.generatedCodes();
     const csv = [
-      ['ID', 'Type', 'Category', 'Description', 'Unit', 'Tags', 'Notes', 'URL', 'Created'],
+      ['ID', 'Type', 'SKU', 'Category', 'Quantity', 'Min Quantity', 'Unit', 'Description', 'Tags', 'Notes', 'Manage Inventory', 'URL', 'Created'],
       ...codes.map((code) => [
         code.name,
         this.codeType,
+        this.codeType === 'item' ? (this.sku || '') : '',
         this.category || '',
+        this.codeType === 'item' ? (this.defaultQuantity?.toString() || '') : '',
+        this.codeType === 'item' ? (this.minQuantity?.toString() || '') : '',
+        this.codeType === 'item' ? (this.unit || '') : '',
         `"${(this.description || '').replace(/"/g, '""')}"`,
-        this.unit || '',
         `"${this.tagsInput || ''}"`,
         `"${(this.notes || '').replace(/"/g, '""')}"`,
+        this.codeType === 'item' ? (this.manageInventory ? 'Yes' : 'No') : '',
         `"${code.url}"`,
         new Date().toISOString(),
       ]),

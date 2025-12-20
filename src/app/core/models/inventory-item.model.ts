@@ -10,6 +10,8 @@ export interface InventoryItem {
   minQuantity: number; // For low-stock alerts
   unit: string; // Unit of measure (pcs, kg, box, etc.)
   notes: string; // Additional notes
+  category: string; // Item category
+  manageInventory: boolean; // Whether to track inventory levels
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +27,8 @@ export interface InventoryItemCreate {
   minQuantity?: number;
   unit?: string;
   notes?: string;
+  category?: string;
+  manageInventory?: boolean;
 }
 
 export interface InventoryItemUpdate {
@@ -38,6 +42,8 @@ export interface InventoryItemUpdate {
   minQuantity?: number;
   unit?: string;
   notes?: string;
+  category?: string;
+  manageInventory?: boolean;
 }
 
 export interface ItemWithLocation extends InventoryItem {

@@ -16,6 +16,8 @@ interface BaserowItem {
   min_quantity: number;
   unit: string;
   notes: string;
+  category: string;
+  manage_inventory: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +55,10 @@ export class InventoryItemService {
     const unit = row.unit ?? (row as any)['unit'] ?? '';
     const notes = row.notes ?? (row as any)['notes'] ?? '';
 
+    // Handle category and manage_inventory fields
+    const category = row.category ?? (row as any)['category'] ?? '';
+    const manageInventory = row.manage_inventory ?? (row as any)['manage inventory'] ?? true;
+
     return {
       id: row.id,
       name: row.name || '',
@@ -65,6 +71,8 @@ export class InventoryItemService {
       minQuantity: Number(minQuantity) || 0,
       unit: unit || '',
       notes: notes || '',
+      category: category || '',
+      manageInventory: Boolean(manageInventory),
       createdAt,
       updatedAt,
     };
@@ -84,6 +92,9 @@ export class InventoryItemService {
       mapped.min_quantity = data.minQuantity;
     if ('unit' in data && data.unit !== undefined) mapped.unit = data.unit;
     if ('notes' in data && data.notes !== undefined) mapped.notes = data.notes;
+    if ('category' in data && data.category !== undefined) mapped.category = data.category;
+    if ('manageInventory' in data && data.manageInventory !== undefined)
+      mapped.manage_inventory = data.manageInventory;
     return mapped;
   }
 

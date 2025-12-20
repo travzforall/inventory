@@ -139,6 +139,30 @@ import { CameraCaptureComponent } from '../../shared/components/camera-capture.c
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div class="form-control w-full">
                   <label class="label">
+                    <span class="label-text">Category</span>
+                  </label>
+                  <select
+                    class="select select-bordered w-full"
+                    [(ngModel)]="form.category"
+                    name="category"
+                  >
+                    <option value="">No category</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="tools">Tools</option>
+                    <option value="office">Office Supplies</option>
+                    <option value="furniture">Furniture</option>
+                    <option value="consumables">Consumables</option>
+                    <option value="equipment">Equipment</option>
+                    <option value="parts">Parts & Components</option>
+                    <option value="packaging">Packaging</option>
+                    <option value="safety">Safety & PPE</option>
+                    <option value="cleaning">Cleaning Supplies</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div class="form-control w-full">
+                  <label class="label">
                     <span class="label-text">Unit of Measure</span>
                   </label>
                   <select
@@ -159,18 +183,35 @@ import { CameraCaptureComponent } from '../../shared/components/camera-capture.c
                     <option value="roll">Rolls</option>
                   </select>
                 </div>
+              </div>
 
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div class="form-control w-full">
                   <label class="label">
                     <span class="label-text">Tags (comma-separated)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g., electronics, tools, office"
+                    placeholder="e.g., fragile, hazmat, perishable"
                     class="input input-bordered w-full"
                     [(ngModel)]="tagsInput"
                     name="tags"
                   />
+                </div>
+
+                <div class="form-control w-full">
+                  <label class="label cursor-pointer justify-start gap-4">
+                    <input
+                      type="checkbox"
+                      class="toggle toggle-primary"
+                      [(ngModel)]="form.manageInventory"
+                      name="manageInventory"
+                    />
+                    <span class="label-text">Manage Inventory</span>
+                  </label>
+                  <label class="label">
+                    <span class="label-text-alt text-base-content/60">Track quantity and low-stock alerts</span>
+                  </label>
                 </div>
               </div>
 
@@ -224,6 +265,7 @@ export class ItemFormComponent implements OnInit {
 
   tagsInput = '';
   images: string[] = [];
+  private pendingLocationLookup: string | null = null;
 
   form: InventoryItemCreate = {
     name: '',
@@ -236,6 +278,8 @@ export class ItemFormComponent implements OnInit {
     images: [],
     unit: '',
     notes: '',
+    category: '',
+    manageInventory: true,
   };
 
   ngOnInit(): void {
@@ -254,50 +298,86 @@ export class ItemFormComponent implements OnInit {
   private prefillFromQueryParams(): void {
     const params = this.route.snapshot.queryParams;
 
-    // Fill form fields directly
-    if (params['name']) {
-      this.form.name = params['name'];
-    }
-    if (params['sku']) {
-      this.form.sku = params['sku'];
-    }
-    if (params['description']) {
-      this.form.description = params['description'];
-    }
-    if (params['quantity']) {
-      this.form.quantity = parseInt(params['quantity'], 10) || 0;
-    }
-    if (params['minQuantity']) {
-      this.form.minQuantity = parseInt(params['minQuantity'], 10) || 0;
-    }
-    if (params['locationId']) {
-      this.form.currentLocationId = parseInt(params['locationId'], 10);
+    // Helper to get param with fallback short form
+    const getParam = (full: string, short?: string): string | undefined => {
+      return params[full] || (short ? params[short] : undefined);
+    };
+
+    // Fill form fields directly (support both full and short param names from QR codes)
+    const name = getParam('name');
+    if (name) {
+      this.form.name = name;
     }
 
-    // Fill unit field directly
-    if (params['unit']) {
-      this.form.unit = params['unit'];
+    const sku = getParam('sku');
+    if (sku) {
+      this.form.sku = sku;
     }
 
-    // Fill notes field directly
-    if (params['notes']) {
-      this.form.notes = params['notes'];
+    // Description: 'description' or 'desc'
+    const description = getParam('description', 'desc');
+    if (description) {
+      this.form.description = description;
     }
 
-    // Build tags from category and tags params only
-    const tagParts: string[] = [];
-    if (params['category']) {
-      tagParts.push(params['category']);
+    // Quantity: 'quantity' or 'qty'
+    const quantity = getParam('quantity', 'qty');
+    if (quantity) {
+      this.form.quantity = parseInt(quantity, 10) || 0;
     }
-    if (params['tags']) {
-      // Split existing tags and add them individually
-      params['tags'].split(',').forEach((tag: string) => {
+
+    // Min Quantity: 'minQuantity' or 'minQty'
+    const minQuantity = getParam('minQuantity', 'minQty');
+    if (minQuantity) {
+      this.form.minQuantity = parseInt(minQuantity, 10) || 0;
+    }
+
+    // Location: 'locationId', 'locId' or 'locationName', 'loc'
+    const locationId = getParam('locationId', 'locId');
+    if (locationId) {
+      this.form.currentLocationId = parseInt(locationId, 10);
+    }
+    // Store location name for lookup after locations load
+    const locationName = getParam('locationName', 'loc');
+    if (locationName && !locationId) {
+      this.pendingLocationLookup = locationName;
+    }
+
+    // Unit field
+    const unit = getParam('unit');
+    if (unit) {
+      this.form.unit = unit;
+    }
+
+    // Notes field
+    const notes = getParam('notes');
+    if (notes) {
+      this.form.notes = notes;
+    }
+
+    // Category: 'category' or 'cat'
+    const category = getParam('category', 'cat');
+    if (category) {
+      this.form.category = category;
+    }
+
+    // Manage Inventory: 'manageInventory', 'manage', or 'inv'
+    const manageVal = params['manageInventory'] ?? params['manage'] ?? params['inv'];
+    if (manageVal !== undefined) {
+      this.form.manageInventory = manageVal === 'true' || manageVal === '1' || manageVal === true;
+    }
+
+    // Build tags from tags param
+    const tags = getParam('tags');
+    if (tags) {
+      const tagParts: string[] = [];
+      tags.split(',').forEach((tag: string) => {
         const trimmed = tag.trim();
         if (trimmed) tagParts.push(trimmed);
       });
-    }
-    if (tagParts.length > 0) {
-      this.tagsInput = tagParts.join(', ');
+      if (tagParts.length > 0) {
+        this.tagsInput = tagParts.join(', ');
+      }
     }
   }
 
@@ -315,6 +395,8 @@ export class ItemFormComponent implements OnInit {
           images: item.images,
           unit: item.unit || '',
           notes: item.notes || '',
+          category: item.category || '',
+          manageInventory: item.manageInventory ?? true,
         };
         this.tagsInput = item.tags.join(', ');
         this.images = item.images;
@@ -328,7 +410,21 @@ export class ItemFormComponent implements OnInit {
 
   private loadLocations(): void {
     this.locationService.getAll().subscribe({
-      next: (locations) => this.locations.set(locations),
+      next: (locations) => {
+        this.locations.set(locations);
+
+        // Handle pending location lookup from QR code
+        if (this.pendingLocationLookup) {
+          const searchName = this.pendingLocationLookup.toLowerCase().trim();
+          const matchingLocation = locations.find(
+            (loc) => loc.name.toLowerCase().trim() === searchName
+          );
+          if (matchingLocation) {
+            this.form.currentLocationId = matchingLocation.id;
+          }
+          this.pendingLocationLookup = null;
+        }
+      },
     });
   }
 
