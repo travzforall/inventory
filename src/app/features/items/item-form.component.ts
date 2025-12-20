@@ -213,6 +213,8 @@ export class ItemFormComponent implements OnInit {
 
   private prefillFromQueryParams(): void {
     const params = this.route.snapshot.queryParams;
+
+    // Fill form fields directly
     if (params['name']) {
       this.form.name = params['name'];
     }
@@ -232,30 +234,32 @@ export class ItemFormComponent implements OnInit {
       this.form.currentLocationId = parseInt(params['locationId'], 10);
     }
 
-    // Build tags from category and tags params
+    // Build tags from category, tags, unit, and notes
+    // Since there's no dedicated unit field, include it as a tag
     const tagParts: string[] = [];
     if (params['category']) {
       tagParts.push(params['category']);
     }
     if (params['tags']) {
-      tagParts.push(params['tags']);
+      // Split existing tags and add them individually
+      params['tags'].split(',').forEach((tag: string) => {
+        const trimmed = tag.trim();
+        if (trimmed) tagParts.push(trimmed);
+      });
+    }
+    if (params['unit']) {
+      tagParts.push(params['unit']);
     }
     if (tagParts.length > 0) {
       this.tagsInput = tagParts.join(', ');
     }
 
-    // Append notes to description if provided
+    // Only add notes to description if there's actual notes content
     if (params['notes'] && params['notes'].trim()) {
+      const notes = params['notes'].trim();
       this.form.description = this.form.description
-        ? `${this.form.description}\n\nNotes: ${params['notes']}`
-        : `Notes: ${params['notes']}`;
-    }
-
-    // If unit is provided, append to description or could be used for a future field
-    if (params['unit']) {
-      this.form.description = this.form.description
-        ? `${this.form.description}\nUnit: ${params['unit']}`
-        : `Unit: ${params['unit']}`;
+        ? `${this.form.description}\n\n${notes}`
+        : notes;
     }
   }
 

@@ -122,38 +122,44 @@ export class LocationFormComponent implements OnInit {
 
   private prefillFromQueryParams(): void {
     const params = this.route.snapshot.queryParams;
+
+    // Fill name - prefer name param, fall back to code
     if (params['name']) {
       this.form.name = params['name'];
+    } else if (params['code']) {
+      this.form.name = params['code'];
     }
-    if (params['code']) {
-      // If there's a code, append it to description or use as name prefix
-      this.form.name = params['name'] || params['code'];
-    }
+
+    // Fill description directly from param
     if (params['description']) {
       this.form.description = params['description'];
     }
+
+    // Fill parent location ID
     if (params['parentId']) {
       this.form.parentLocationId = parseInt(params['parentId'], 10);
     }
 
-    // Handle category - add to description for locations
-    if (params['category']) {
-      const categoryNote = `Type: ${params['category']}`;
-      this.form.description = this.form.description
-        ? `${categoryNote}\n${this.form.description}`
-        : categoryNote;
-    }
-
-    // Handle notes
-    if (params['notes'] && params['notes'].trim()) {
-      this.form.description = this.form.description
-        ? `${this.form.description}\n\nNotes: ${params['notes']}`
-        : `Notes: ${params['notes']}`;
+    // Build description from category and notes if no description provided
+    // Only add these if there's no explicit description
+    if (!params['description']) {
+      const descParts: string[] = [];
+      if (params['category']) {
+        descParts.push(`Type: ${params['category']}`);
+      }
+      if (params['notes'] && params['notes'].trim()) {
+        descParts.push(params['notes'].trim());
+      }
+      if (descParts.length > 0) {
+        this.form.description = descParts.join('\n');
+      }
+    } else if (params['notes'] && params['notes'].trim()) {
+      // If there's a description AND notes, append notes
+      this.form.description = `${this.form.description}\n\n${params['notes'].trim()}`;
     }
 
     // Handle parentLocation string (search for matching location)
     if (params['parentLocation'] && !params['parentId']) {
-      // Store it for later lookup once locations are loaded
       this.pendingParentLookup = params['parentLocation'];
     }
   }
