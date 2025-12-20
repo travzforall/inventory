@@ -4,3 +4,4 @@ export * from './location.service';
 export * from './inventory-item.service';
 export * from './scan-event.service';
 export * from './auth.service';
+export * from './qr-code.service';

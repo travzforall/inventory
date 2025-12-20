@@ -68,6 +68,12 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'qr-codes',
+    loadComponent: () =>
+      import('./features/qr-codes/qr-generator.component').then((m) => m.QRGeneratorComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'items',
     canActivate: [authGuard],
     children: [
