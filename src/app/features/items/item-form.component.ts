@@ -1,14 +1,15 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { InventoryItemService, LocationService } from '../../core/services';
 import { InventoryItemCreate, StorageLocation } from '../../core/models';
+import { CameraCaptureComponent } from '../../shared/components/camera-capture.component';
 
 @Component({
   selector: 'app-item-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CameraCaptureComponent],
   template: `
     <div class="min-h-screen bg-base-200">
       <div class="navbar bg-base-100 shadow-lg sticky top-0 z-10">
@@ -26,6 +27,19 @@ import { InventoryItemCreate, StorageLocation } from '../../core/models';
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <form (ngSubmit)="onSubmit()">
+              <!-- Photos Section -->
+              <div class="form-control w-full mb-4">
+                <label class="label">
+                  <span class="label-text font-semibold">Photos</span>
+                </label>
+                <app-camera-capture
+                  #cameraCapture
+                  (imagesChanged)="onImagesChanged($event)"
+                />
+              </div>
+
+              <div class="divider"></div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-control w-full">
                   <label class="label">
@@ -53,6 +67,15 @@ import { InventoryItemCreate, StorageLocation } from '../../core/models';
                     name="sku"
                     required
                   />
+                  @if (!form.sku && form.name) {
+                    <label class="label">
+                      <span class="label-text-alt">
+                        <button type="button" class="link link-primary" (click)="generateSku()">
+                          Generate SKU
+                        </button>
+                      </span>
+                    </label>
+                  }
                 </div>
               </div>
 
@@ -154,12 +177,15 @@ export class ItemFormComponent implements OnInit {
   private itemService = inject(InventoryItemService);
   private locationService = inject(LocationService);
 
+  cameraCapture = viewChild<CameraCaptureComponent>('cameraCapture');
+
   isEdit = signal(false);
   saving = signal(false);
   itemId = signal<number | null>(null);
   locations = signal<StorageLocation[]>([]);
 
   tagsInput = '';
+  images: string[] = [];
 
   form: InventoryItemCreate = {
     name: '',
@@ -169,6 +195,7 @@ export class ItemFormComponent implements OnInit {
     minQuantity: 0,
     currentLocationId: undefined,
     tags: [],
+    images: [],
   };
 
   ngOnInit(): void {
@@ -220,8 +247,14 @@ export class ItemFormComponent implements OnInit {
           minQuantity: item.minQuantity,
           currentLocationId: item.currentLocationId ?? undefined,
           tags: item.tags,
+          images: item.images,
         };
         this.tagsInput = item.tags.join(', ');
+        this.images = item.images;
+        // Set images in camera component after view init
+        setTimeout(() => {
+          this.cameraCapture()?.setImages(item.images);
+        });
       },
     });
   }
@@ -232,6 +265,20 @@ export class ItemFormComponent implements OnInit {
     });
   }
 
+  onImagesChanged(images: string[]): void {
+    this.images = images;
+  }
+
+  generateSku(): void {
+    // Generate SKU from name
+    const prefix = this.form.name
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .substring(0, 6);
+    const timestamp = Date.now().toString().slice(-4);
+    this.form.sku = `${prefix}-${timestamp}`;
+  }
+
   onSubmit(): void {
     if (!this.form.name || !this.form.sku) return;
 
@@ -239,6 +286,7 @@ export class ItemFormComponent implements OnInit {
 
     const data = {
       ...this.form,
+      images: this.images,
       tags: this.tagsInput
         .split(',')
         .map((t) => t.trim())
@@ -262,7 +310,13 @@ export class ItemFormComponent implements OnInit {
     if (this.isEdit() && this.itemId()) {
       this.router.navigate(['/items', this.itemId()]);
     } else {
-      this.router.navigate(['/items']);
+      // Check if we came from a location
+      const locationId = this.route.snapshot.queryParams['locationId'];
+      if (locationId) {
+        this.router.navigate(['/locations', locationId]);
+      } else {
+        this.router.navigate(['/items']);
+      }
     }
   }
 }

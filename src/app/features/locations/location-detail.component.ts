@@ -47,7 +47,7 @@ type ViewMode = 'grid' | 'list';
           </div>
 
           @if (canAddItem()) {
-            <button class="btn btn-primary btn-sm" (click)="openAddItemModal()">
+            <button class="btn btn-primary btn-sm" (click)="addItemToLocation()">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -186,13 +186,21 @@ type ViewMode = 'grid' | 'list';
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
                 <h3 class="text-xl font-semibold mt-4">No items found</h3>
-                <p class="text-base-content/70">
+                <p class="text-base-content/70 mb-4">
                   @if (searchQuery || selectedTag) {
                     Try adjusting your search or filters
                   } @else {
                     This location doesn't have any items yet
                   }
                 </p>
+                @if (!searchQuery && !selectedTag && canAddItem()) {
+                  <button class="btn btn-primary" (click)="addItemToLocation()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add First Item
+                  </button>
+                }
               </div>
             </div>
           } @else {
@@ -322,18 +330,6 @@ type ViewMode = 'grid' | 'list';
         </div>
       }
 
-      <!-- Add Item Modal -->
-      <dialog id="add_item_modal" class="modal">
-        <div class="modal-box">
-          <h3 class="font-bold text-lg">Add Item to Location</h3>
-          <p class="py-4">Feature coming soon...</p>
-          <div class="modal-action">
-            <form method="dialog">
-              <button class="btn">Close</button>
-            </form>
-          </div>
-        </div>
-      </dialog>
     </div>
   `,
 })
@@ -451,9 +447,11 @@ export class LocationDetailComponent implements OnInit {
     });
   }
 
-  openAddItemModal(): void {
-    const modal = document.getElementById('add_item_modal') as HTMLDialogElement;
-    modal?.showModal();
+  addItemToLocation(): void {
+    const locationId = this.location()?.id;
+    this.router.navigate(['/items/add'], {
+      queryParams: { locationId },
+    });
   }
 
   goBack(): void {
