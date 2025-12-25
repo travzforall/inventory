@@ -41,6 +41,12 @@ export interface PDFConfig {
   columns: number;
   showLabel: boolean;
   showUrl: boolean;
+  // Label sheet mode - print multiple QR codes on physical label sheets
+  labelSheetMode?: boolean;
+  sheetWidth?: number;  // Physical label sheet width in mm
+  sheetHeight?: number; // Physical label sheet height in mm
+  sheetRows?: number;   // Number of rows in the grid
+  sheetCols?: number;   // Number of columns in the grid
 }
 
 // Label sizes in mm
@@ -183,6 +189,11 @@ export class QRCodeService {
    * Generate PDF with QR codes
    */
   async generatePDF(codes: QRCodeItem[], config: PDFConfig): Promise<Blob> {
+    // Check if using label sheet mode
+    if (config.labelSheetMode && config.sheetWidth && config.sheetHeight) {
+      return this.generateLabelSheetPDF(codes, config);
+    }
+
     // Get label dimensions
     const labelSize =
       config.labelSize === 'custom'
@@ -265,6 +276,103 @@ export class QRCodeService {
         pdf.addPage();
         currentPage++;
         labelsOnCurrentPage = 0;
+      }
+    }
+
+    return pdf.output('blob');
+  }
+
+  /**
+   * Generate PDF for physical label sheets
+   * Each page matches the exact label sheet dimensions for direct printing
+   * QR codes are sized to fill the grid at maximum size
+   */
+  private async generateLabelSheetPDF(codes: QRCodeItem[], config: PDFConfig): Promise<Blob> {
+    const sheetWidth = config.sheetWidth!;
+    const sheetHeight = config.sheetHeight!;
+    const cols = config.sheetCols || 2;
+    const rows = config.sheetRows || 2;
+
+    // Margin inside the label sheet
+    const margin = 3;
+    const gap = 2; // Gap between QR codes
+
+    // Calculate available space
+    const availableWidth = sheetWidth - 2 * margin - (cols - 1) * gap;
+    const availableHeight = sheetHeight - 2 * margin - (rows - 1) * gap;
+
+    // Text height for labels
+    const textHeight = config.showLabel || config.showUrl ? 6 : 0;
+
+    // Calculate maximum QR size that fits in each cell
+    const maxWidthPerCell = availableWidth / cols;
+    const maxHeightPerCell = (availableHeight / rows) - textHeight;
+    const qrSize = Math.floor(Math.min(maxWidthPerCell, maxHeightPerCell));
+
+    const codesPerSheet = cols * rows;
+
+    // Calculate cell dimensions
+    const cellWidth = qrSize;
+    const cellHeight = qrSize + textHeight;
+
+    // Calculate grid dimensions and center it
+    const gridWidth = cols * cellWidth + (cols - 1) * gap;
+    const gridHeight = rows * cellHeight + (rows - 1) * gap;
+    const startX = margin + (sheetWidth - 2 * margin - gridWidth) / 2;
+    const startY = margin + (sheetHeight - 2 * margin - gridHeight) / 2;
+
+    // Create PDF with custom page size matching the label sheet
+    const pdf = new jsPDF({
+      orientation: sheetWidth > sheetHeight ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: [sheetWidth, sheetHeight],
+    });
+
+    let codeIndex = 0;
+
+    while (codeIndex < codes.length) {
+      if (codeIndex > 0) {
+        pdf.addPage([sheetWidth, sheetHeight]);
+      }
+
+      // Draw light border around the label sheet for alignment reference
+      pdf.setDrawColor(220, 220, 220);
+      pdf.setLineWidth(0.2);
+      pdf.rect(1, 1, sheetWidth - 2, sheetHeight - 2);
+
+      // Fill this sheet with QR codes
+      for (let slot = 0; slot < codesPerSheet && codeIndex < codes.length; slot++) {
+        const code = codes[codeIndex];
+        const col = slot % cols;
+        const row = Math.floor(slot / cols);
+
+        const x = startX + col * (cellWidth + gap);
+        const y = startY + row * (cellHeight + gap);
+
+        // Draw QR code
+        pdf.addImage(code.dataUrl, 'PNG', x, y, qrSize, qrSize);
+
+        // Add label text below QR code
+        if (config.showLabel || config.showUrl) {
+          // Dynamic font size based on QR size
+          const fontSize = Math.max(5, Math.min(10, qrSize / 5));
+          pdf.setFontSize(fontSize);
+          pdf.setTextColor(0, 0, 0);
+
+          const textX = x + cellWidth / 2;
+          const textY = y + qrSize + fontSize / 2 + 1;
+
+          if (config.showLabel) {
+            // Truncate label to fit
+            const maxChars = Math.floor(cellWidth / (fontSize * 0.35));
+            const label = code.name.length > maxChars
+              ? code.name.substring(0, maxChars - 2) + '..'
+              : code.name;
+            pdf.text(label, textX, textY, { align: 'center' });
+          }
+        }
+
+        codeIndex++;
       }
     }
 

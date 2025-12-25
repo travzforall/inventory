@@ -1,0 +1,18 @@
+Vm Number,VM Name,Host Name,CPU,RAM,HDD,Bucket,Server OS,IP Address,Dockge,Software 1,Software 1 Ports,Dockge Link,Software 2,Software 2 Ports,Dockge Link,Software 3,Software 3 Ports,Dockge Link,Software 4,Software 4 Ports,Dockge Link,Software 5,Software 5 Ports,Dockge Link,VLAN,Live,https,Setup
+102,server-1,,3 cores,19.53,50 GB SCSI ,bucket,Ubuntu 24,192.168.1.194,5001,Dockge,5001,http://192.168.1.194:5001,,,http://192.168.1.194:,,,,,,,,,,1,FALSE,FALSE,FALSE
+103,server-2,,3 cores,19.53,85 GB SCSI,bucket,Ubuntu 24,192.168.1.193,5001,Dockge,5001,http://192.168.1.193:5001,Nginx Proxy Manager,81,http://192.168.1.193:81,Vaultwarden,4080,http://192.168.1.193:4080,,,http://192.168.1.193:,,,,1,FALSE,FALSE,TRUE
+104,server-3,,3 cores,19.53,50 GB SCSI,bucket,Ubuntu 24,192.168.1.195,5001,QBit Torrent,,http://192.168.1.195:,,,http://192.168.1.195:,,,,,,,,,,1,TRUE,FALSE,FALSE
+105,server-4,,3 cores,19.53,"
+50 GB SCSI",bucket,Ubuntu 24,192.168.1.196,5001,Penpot,9001,http://192.168.1.196:9001,Dockge,5001,http://192.168.1.196:5001,,,http://192.168.1.196:,,,,,,,1,FALSE,FALSE,FALSE
+106,server-5,,3 cores,19.53,100 GB SCSI,bucket,Ubuntu 24,192.168.1.203,5001,Frigate,,http://192.168.1.203:,Frigate,5000,http://192.168.1.203:5000,Home Assistant,,http://192.168.1.203:,,,http://192.168.1.203:,,,,1,TRUE,FALSE,FALSE
+107,server-6,,3 cores,19.53,"
+200 GB SCSI",bucket,Ubuntu 24,192.168.1.251,5001,Baserow,3000,http://192.168.1.251:3000,,,http://192.168.1.251:,,,,,,,,,,1,TRUE,FALSE,FALSE
+108,server-7,,3 cores,19.53,"
+200 GB SCSI",bucket,Ubuntu 24,192.168.1.252,5001,Dockge,5001,http://192.168.1.252:5001,,,http://192.168.1.252:,,,,,,,,,,1,FALSE,FALSE,FALSE
+116,server-8,p-app-vm02,3 cores,19.53,50 GB SCSI,bucket2,Ubuntu 24,192.168.1.209,5001,Azuracast,80,http://192.168.1.209:80,,,http://192.168.1.209:,,,,,,,,,,1,FALSE,TRUE,FALSE
+117,server-9,p-app-vm01,3 cores,19.53,"
+50 GB SCSI",bucket2,Ubuntu 24,192.168.1.211,5001,Odoo,,http://192.168.1.211:,,,http://192.168.1.211:,,,,,,,,,,1,FALSE,FALSE,FALSE
+111,server-10,,3 cores,19.53,32 GB SCSI,bucket2,Ubuntu 24,192.168.1.173,5001,,,http://192.168.1.173:,,,,,,,,,,,,,1,FALSE,FALSE,FALSE
+107,omv,omv,3 cores,19.53,"200 GB SCSI
+250 GB SCSI",bucket,Debian 11,192.168.1.200,5001,OpenMediaVault,80,http://192.168.1.200:80,,,http://192.168.1.200:,,,,,,,,,,1,FALSE,TRUE,FALSE
+112,canvas,canvas,2 cores,19.53,350 GB SCSI,bucket2,Debian 11,192.168.1.162,5001,Canvas,80,http://192.168.1.162:80,,,http://192.168.1.162:,,,,,,,,,,1,FALSE,FALSE,FALSE

@@ -74,6 +74,27 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'id-templates',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/id-templates/id-template-list.component').then((m) => m.IdTemplateListComponent),
+      },
+      {
+        path: 'add',
+        loadComponent: () =>
+          import('./features/id-templates/id-template-form.component').then((m) => m.IdTemplateFormComponent),
+      },
+      {
+        path: ':id/edit',
+        loadComponent: () =>
+          import('./features/id-templates/id-template-form.component').then((m) => m.IdTemplateFormComponent),
+      },
+    ],
+  },
+  {
     path: 'items',
     canActivate: [authGuard],
     children: [
@@ -91,6 +112,11 @@ export const routes: Routes = [
         path: 'low-stock',
         loadComponent: () =>
           import('./features/items/low-stock.component').then((m) => m.LowStockComponent),
+      },
+      {
+        path: 'bulk-add',
+        loadComponent: () =>
+          import('./features/items/bulk-item-add.component').then((m) => m.BulkItemAddComponent),
       },
       {
         path: 'new',
@@ -111,6 +137,134 @@ export const routes: Routes = [
         path: ':id/edit',
         loadComponent: () =>
           import('./features/items/item-form.component').then((m) => m.ItemFormComponent),
+      },
+    ],
+  },
+  {
+    path: 'buzzer',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/buzzer/buzzer-dashboard.component').then((m) => m.BuzzerDashboardComponent),
+      },
+      {
+        path: 'game',
+        loadComponent: () =>
+          import('./features/buzzer/buzzer-game.component').then((m) => m.BuzzerGameComponent),
+      },
+      {
+        path: 'freeplay',
+        loadComponent: () =>
+          import('./features/buzzer/buzzer-freeplay.component').then((m) => m.BuzzerFreeplayComponent),
+      },
+      {
+        path: 'mapping',
+        loadComponent: () =>
+          import('./features/buzzer/buzzer-mapping.component').then((m) => m.BuzzerMappingComponent),
+      },
+      {
+        path: 'quiz',
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/buzzer/quiz/quiz-lobby.component').then((m) => m.QuizLobbyComponent),
+          },
+          {
+            path: 'play',
+            loadComponent: () =>
+              import('./features/buzzer/quiz/quiz-game.component').then((m) => m.QuizGameComponent),
+          },
+          {
+            path: 'create',
+            loadComponent: () =>
+              import('./features/buzzer/quiz/quiz-creator.component').then((m) => m.QuizCreatorComponent),
+          },
+          {
+            path: 'edit/:id',
+            loadComponent: () =>
+              import('./features/buzzer/quiz/quiz-creator.component').then((m) => m.QuizCreatorComponent),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: 'labels',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/labels/label-queue.component').then((m) => m.LabelQueueComponent),
+      },
+      {
+        path: 'registry',
+        loadComponent: () =>
+          import('./features/labels/cid-registry.component').then((m) => m.CidRegistryComponent),
+      },
+    ],
+  },
+  {
+    path: 'it-assets',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/it-assets/it-assets-dashboard.component').then((m) => m.ItAssetsDashboardComponent),
+      },
+      {
+        path: 'servers',
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/it-assets/server-list.component').then((m) => m.ServerListComponent),
+          },
+          {
+            path: 'add',
+            loadComponent: () =>
+              import('./features/it-assets/server-form.component').then((m) => m.ServerFormComponent),
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/it-assets/server-detail.component').then((m) => m.ServerDetailComponent),
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('./features/it-assets/server-form.component').then((m) => m.ServerFormComponent),
+          },
+        ],
+      },
+      {
+        path: 'software',
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/it-assets/software-list.component').then((m) => m.SoftwareListComponent),
+          },
+          {
+            path: 'add',
+            loadComponent: () =>
+              import('./features/it-assets/software-form.component').then((m) => m.SoftwareFormComponent),
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/it-assets/software-detail.component').then((m) => m.SoftwareDetailComponent),
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('./features/it-assets/software-form.component').then((m) => m.SoftwareFormComponent),
+          },
+        ],
       },
     ],
   },

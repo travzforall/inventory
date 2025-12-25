@@ -25,8 +25,396 @@ import { StorageLocation } from '../../core/models';
       </div>
 
       <div class="container mx-auto p-4 max-w-4xl">
-        <!-- Step 1: Configuration -->
+        <!-- Mode Selection Tabs -->
         @if (step() === 1) {
+          <div class="tabs tabs-boxed mb-4 justify-center">
+            <a class="tab" [class.tab-active]="generationMode === 'standard'" (click)="generationMode = 'standard'">
+              Standard Mode
+            </a>
+            <a class="tab" [class.tab-active]="generationMode === 'bulk'" (click)="generationMode = 'bulk'">
+              Bulk Unique Data
+            </a>
+          </div>
+        }
+
+        <!-- BULK MODE: Generate multiple with same settings -->
+        @if (step() === 1 && generationMode === 'bulk') {
+          <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+              <h2 class="card-title">
+                <span class="badge badge-secondary">Bulk Mode</span>
+                Generate Multiple QR Codes
+              </h2>
+              <p class="text-base-content/60 text-sm">Generate multiple codes with the same settings - each gets a unique ID</p>
+
+              <!-- Quick Count Selection -->
+              <div class="bg-base-200 rounded-box p-4 mt-4">
+                <label class="label">
+                  <span class="label-text font-semibold">How many QR codes?</span>
+                </label>
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-2 mb-3">
+                  @for (preset of bulkPresets; track preset.count) {
+                    <button
+                      class="btn btn-sm"
+                      [class.btn-primary]="codeCount === preset.count"
+                      [class.btn-outline]="codeCount !== preset.count"
+                      (click)="codeCount = preset.count"
+                    >
+                      {{ preset.count }}
+                    </button>
+                  }
+                </div>
+                <input
+                  type="number"
+                  class="input input-bordered w-full"
+                  [(ngModel)]="codeCount"
+                  min="1"
+                  max="500"
+                  placeholder="Or enter custom count"
+                />
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left column: Generation settings -->
+                <div class="space-y-4">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Code Type</span>
+                    </label>
+                    <select class="select select-bordered w-full" [(ngModel)]="codeType" (ngModelChange)="onCodeTypeChange($event)">
+                      <option value="location">Location Tags</option>
+                      <option value="item">Item Tags</option>
+                    </select>
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Prefix</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered w-full"
+                      [(ngModel)]="prefix"
+                      placeholder="e.g., LOC, ITEM, WH"
+                      maxlength="10"
+                    />
+                    <label class="label">
+                      <span class="label-text-alt">ID format: {{ prefix || 'TAG' }}-XXXXX</span>
+                    </label>
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Base URL</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered w-full"
+                      [(ngModel)]="baseUrl"
+                      placeholder="https://your-app.netlify.app"
+                    />
+                    <label class="label">
+                      <span class="label-text-alt">The host URL for QR code links</span>
+                    </label>
+                  </div>
+
+                  <!-- Location-specific fields -->
+                  @if (codeType === 'location') {
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Category</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="category">
+                        <option value="">No category</option>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="shelf">Shelf</option>
+                        <option value="bin">Bin</option>
+                        <option value="room">Room</option>
+                        <option value="zone">Zone</option>
+                        <option value="rack">Rack</option>
+                      </select>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Parent Location</span>
+                      </label>
+                      <input
+                        type="text"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="parentLocation"
+                        placeholder="e.g., Warehouse A"
+                      />
+                    </div>
+
+                    <div class="collapse collapse-arrow bg-base-200">
+                      <input type="checkbox" />
+                      <div class="collapse-title text-sm font-semibold">Capacity Rules</div>
+                      <div class="collapse-content space-y-3">
+                        <div class="form-control">
+                          <label class="label"><span class="label-text">Max Items</span></label>
+                          <input type="number" class="input input-bordered w-full input-sm" [(ngModel)]="maxItems" min="0" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <div class="form-control">
+                            <label class="label"><span class="label-text">Max Weight</span></label>
+                            <input type="number" class="input input-bordered w-full input-sm" [(ngModel)]="maxWeight" min="0" />
+                          </div>
+                          <div class="form-control">
+                            <label class="label"><span class="label-text">Unit</span></label>
+                            <select class="select select-bordered w-full select-sm" [(ngModel)]="weightUnit">
+                              <option value="">-</option>
+                              <option value="kg">kg</option>
+                              <option value="lb">lb</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="form-control">
+                          <label class="label"><span class="label-text">Allowed Categories</span></label>
+                          <input type="text" class="input input-bordered w-full input-sm" [(ngModel)]="allowedCategoriesInput" placeholder="electronics, tools" />
+                        </div>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Item-specific fields -->
+                  @if (codeType === 'item') {
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Category</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="category">
+                        <option value="">No category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="tools">Tools</option>
+                        <option value="office">Office Supplies</option>
+                        <option value="furniture">Furniture</option>
+                        <option value="consumables">Consumables</option>
+                        <option value="equipment">Equipment</option>
+                        <option value="parts">Parts & Components</option>
+                        <option value="packaging">Packaging</option>
+                        <option value="safety">Safety & PPE</option>
+                        <option value="cleaning">Cleaning Supplies</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="form-control">
+                        <label class="label">
+                          <span class="label-text font-semibold">Default Quantity</span>
+                        </label>
+                        <input type="number" class="input input-bordered w-full" [(ngModel)]="defaultQuantity" min="0" />
+                      </div>
+                      <div class="form-control">
+                        <label class="label">
+                          <span class="label-text font-semibold">Min Quantity</span>
+                        </label>
+                        <input type="number" class="input input-bordered w-full" [(ngModel)]="minQuantity" min="0" />
+                      </div>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Unit of Measure</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="unit">
+                        <option value="">No unit</option>
+                        <option value="pcs">Pieces (pcs)</option>
+                        <option value="kg">Kilograms (kg)</option>
+                        <option value="g">Grams (g)</option>
+                        <option value="l">Liters (L)</option>
+                        <option value="ml">Milliliters (mL)</option>
+                        <option value="m">Meters (m)</option>
+                        <option value="box">Boxes</option>
+                        <option value="pack">Packs</option>
+                      </select>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Default Location</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="defaultLocationId">
+                        <option [ngValue]="undefined">No default location</option>
+                        @for (loc of locations(); track loc.id) {
+                          <option [ngValue]="loc.id">{{ loc.name }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" class="toggle toggle-primary" [(ngModel)]="manageInventory" />
+                        <span class="label-text font-semibold">Manage Inventory</span>
+                      </label>
+                    </div>
+                  }
+                </div>
+
+                <!-- Right column: PDF settings + Additional Data -->
+                <div class="space-y-4">
+                  <!-- Label Sheet Mode Toggle -->
+                  <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-4">
+                      <input type="checkbox" class="toggle toggle-accent" [(ngModel)]="labelSheetMode" />
+                      <div>
+                        <span class="label-text font-semibold">Label Sheet Mode</span>
+                        <p class="text-xs text-base-content/60">Print multiple QR codes on physical label sheets</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  @if (labelSheetMode) {
+                    <!-- Label Sheet Grid Settings -->
+                    <div class="bg-accent/10 rounded-box p-3 space-y-3">
+                      <label class="label pt-0">
+                        <span class="label-text font-semibold">Label Sheet Size (mm)</span>
+                      </label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Width</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetWidth" min="40" max="300" />
+                        </div>
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Height</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetHeight" min="40" max="300" />
+                        </div>
+                      </div>
+
+                      <label class="label pt-2 pb-0">
+                        <span class="label-text font-semibold">Grid Layout</span>
+                      </label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Columns</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetCols" min="1" max="6" />
+                        </div>
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Rows</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetRows" min="1" max="6" />
+                        </div>
+                      </div>
+
+                      @if (getCodesPerSheet() > 0) {
+                        <div class="text-xs text-accent font-medium mt-2">
+                          {{ getCodesPerSheet() }} codes per sheet ({{ getQRCodeSize() }}mm each) &bull; {{ getSheetsNeeded() }} sheet(s) needed
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Label Size</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="labelSize">
+                        <option value="small">Small (25mm / 1 inch)</option>
+                        <option value="medium">Medium (50mm / 2 inch)</option>
+                        <option value="large">Large (75mm / 3 inch)</option>
+                        <option value="custom">Custom Size</option>
+                      </select>
+                    </div>
+
+                    @if (labelSize === 'custom') {
+                      <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                          <label class="label"><span class="label-text">Width (mm)</span></label>
+                          <input type="number" class="input input-bordered w-full" [(ngModel)]="customWidth" min="20" max="100" />
+                        </div>
+                        <div class="form-control">
+                          <label class="label"><span class="label-text">Height (mm)</span></label>
+                          <input type="number" class="input input-bordered w-full" [(ngModel)]="customHeight" min="20" max="100" />
+                        </div>
+                      </div>
+                    }
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Columns per Row</span>
+                      </label>
+                      <input type="number" class="input input-bordered w-full" [(ngModel)]="columns" min="1" max="8" />
+                    </div>
+                  }
+
+                  <div class="flex gap-4">
+                    <label class="label cursor-pointer gap-2">
+                      <input type="checkbox" class="checkbox" [(ngModel)]="showLabel" />
+                      <span class="label-text">Show ID Label</span>
+                    </label>
+                    <label class="label cursor-pointer gap-2">
+                      <input type="checkbox" class="checkbox" [(ngModel)]="showUrl" />
+                      <span class="label-text">Show URL</span>
+                    </label>
+                  </div>
+
+                  <div class="divider text-xs">Additional Data</div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Description</span>
+                    </label>
+                    <textarea
+                      class="textarea textarea-bordered w-full"
+                      [(ngModel)]="description"
+                      placeholder="Brief description (max 100 chars)"
+                      maxlength="100"
+                      rows="2"
+                    ></textarea>
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Tags</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered w-full"
+                      [(ngModel)]="tagsInput"
+                      placeholder="fragile, heavy, flammable"
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold">Notes</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered w-full"
+                      [(ngModel)]="notes"
+                      placeholder="Short note (max 50 chars)"
+                      maxlength="50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Generate Button -->
+              <button
+                class="btn btn-primary btn-lg w-full"
+                [disabled]="!codeCount || codeCount < 1 || generating()"
+                (click)="generateCodes()"
+              >
+                @if (generating()) {
+                  <span class="loading loading-spinner"></span>
+                  Generating...
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                  </svg>
+                  Generate {{ codeCount }} QR Codes
+                }
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- STANDARD MODE: Step 1: Configuration -->
+        @if (step() === 1 && generationMode === 'standard') {
           <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
               <h2 class="card-title">
@@ -295,59 +683,109 @@ import { StorageLocation } from '../../core/models';
 
                 <!-- Right column: PDF settings + Additional Data -->
                 <div class="space-y-4">
+                  <!-- Label Sheet Mode Toggle -->
                   <div class="form-control">
-                    <label class="label">
-                      <span class="label-text font-semibold">Label Size</span>
+                    <label class="label cursor-pointer justify-start gap-4">
+                      <input type="checkbox" class="toggle toggle-accent" [(ngModel)]="labelSheetMode" />
+                      <div>
+                        <span class="label-text font-semibold">Label Sheet Mode</span>
+                        <p class="text-xs text-base-content/60">Print multiple QR codes per label sheet</p>
+                      </div>
                     </label>
-                    <select class="select select-bordered w-full" [(ngModel)]="labelSize">
-                      <option value="small">Small (25mm / 1 inch)</option>
-                      <option value="medium">Medium (50mm / 2 inch)</option>
-                      <option value="large">Large (75mm / 3 inch)</option>
-                      <option value="custom">Custom Size</option>
-                    </select>
                   </div>
 
-                  @if (labelSize === 'custom') {
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="form-control">
-                        <label class="label">
-                          <span class="label-text">Width (mm)</span>
-                        </label>
-                        <input
-                          type="number"
-                          class="input input-bordered w-full"
-                          [(ngModel)]="customWidth"
-                          min="20"
-                          max="100"
-                        />
+                  @if (labelSheetMode) {
+                    <!-- Label Sheet Grid Settings -->
+                    <div class="bg-accent/10 rounded-box p-3 space-y-3">
+                      <label class="label pt-0">
+                        <span class="label-text font-semibold">Label Sheet Size (mm)</span>
+                      </label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Width</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetWidth" min="40" max="300" />
+                        </div>
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Height</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetHeight" min="40" max="300" />
+                        </div>
                       </div>
-                      <div class="form-control">
-                        <label class="label">
-                          <span class="label-text">Height (mm)</span>
-                        </label>
-                        <input
-                          type="number"
-                          class="input input-bordered w-full"
-                          [(ngModel)]="customHeight"
-                          min="20"
-                          max="100"
-                        />
+
+                      <label class="label pt-2 pb-0">
+                        <span class="label-text font-semibold">Grid Layout</span>
+                      </label>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Columns</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetCols" min="1" max="6" />
+                        </div>
+                        <div class="form-control">
+                          <label class="label py-1"><span class="label-text text-xs">Rows</span></label>
+                          <input type="number" class="input input-bordered input-sm w-full" [(ngModel)]="sheetRows" min="1" max="6" />
+                        </div>
                       </div>
+
+                      @if (getCodesPerSheet() > 0) {
+                        <div class="text-xs text-accent font-medium mt-2">
+                          {{ getCodesPerSheet() }} codes per sheet ({{ getQRCodeSize() }}mm each) &bull; {{ getSheetsNeeded() }} sheet(s) needed
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Label Size</span>
+                      </label>
+                      <select class="select select-bordered w-full" [(ngModel)]="labelSize">
+                        <option value="small">Small (25mm / 1 inch)</option>
+                        <option value="medium">Medium (50mm / 2 inch)</option>
+                        <option value="large">Large (75mm / 3 inch)</option>
+                        <option value="custom">Custom Size</option>
+                      </select>
+                    </div>
+
+                    @if (labelSize === 'custom') {
+                      <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                          <label class="label">
+                            <span class="label-text">Width (mm)</span>
+                          </label>
+                          <input
+                            type="number"
+                            class="input input-bordered w-full"
+                            [(ngModel)]="customWidth"
+                            min="20"
+                            max="100"
+                          />
+                        </div>
+                        <div class="form-control">
+                          <label class="label">
+                            <span class="label-text">Height (mm)</span>
+                          </label>
+                          <input
+                            type="number"
+                            class="input input-bordered w-full"
+                            [(ngModel)]="customHeight"
+                            min="20"
+                            max="100"
+                          />
+                        </div>
+                      </div>
+                    }
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-semibold">Columns per Row</span>
+                      </label>
+                      <input
+                        type="number"
+                        class="input input-bordered w-full"
+                        [(ngModel)]="columns"
+                        min="1"
+                        max="8"
+                      />
                     </div>
                   }
-
-                  <div class="form-control">
-                    <label class="label">
-                      <span class="label-text font-semibold">Columns per Row</span>
-                    </label>
-                    <input
-                      type="number"
-                      class="input input-bordered w-full"
-                      [(ngModel)]="columns"
-                      min="1"
-                      max="8"
-                    />
-                  </div>
 
                   <div class="form-control">
                     <label class="label cursor-pointer">
@@ -478,10 +916,23 @@ import { StorageLocation } from '../../core/models';
                   <div class="stat-title">Type</div>
                   <div class="stat-value text-secondary capitalize">{{ codeType }}</div>
                 </div>
-                <div class="stat">
-                  <div class="stat-title">Size</div>
-                  <div class="stat-value">{{ getLabelSizeDisplay() }}</div>
-                </div>
+                @if (labelSheetMode) {
+                  <div class="stat">
+                    <div class="stat-title">Sheet Size</div>
+                    <div class="stat-value text-accent">{{ sheetWidth }}×{{ sheetHeight }}</div>
+                    <div class="stat-desc">mm ({{ getCodesPerSheet() }}/sheet)</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-title">Sheets</div>
+                    <div class="stat-value">{{ getSheetsNeeded() }}</div>
+                    <div class="stat-desc">to print</div>
+                  </div>
+                } @else {
+                  <div class="stat">
+                    <div class="stat-title">Size</div>
+                    <div class="stat-value">{{ getLabelSizeDisplay() }}</div>
+                  </div>
+                }
               </div>
 
               <div class="flex gap-2 mt-4">
@@ -561,6 +1012,20 @@ export class QRGeneratorComponent implements OnInit {
     });
   }
 
+  // Generation mode
+  generationMode: 'standard' | 'bulk' = 'bulk';
+
+  // Bulk mode fields
+  bulkCount = 10;
+  bulkType: 'location' | 'item' = 'location';
+  bulkPrefix = '';
+  bulkPresets = [
+    { count: 10, label: 'Small batch' },
+    { count: 25, label: 'Medium batch' },
+    { count: 50, label: 'Large batch' },
+    { count: 100, label: 'Extra large' },
+  ];
+
   // Form fields - Basic
   codeCount = 10;
   codeType: 'location' | 'item' = 'location';
@@ -572,6 +1037,13 @@ export class QRGeneratorComponent implements OnInit {
   columns = 4;
   showLabel = true;
   showUrl = false;
+
+  // Label sheet mode - for printing on physical label sheets
+  labelSheetMode = false;
+  sheetWidth = 110; // Label sheet width in mm
+  sheetHeight = 80; // Label sheet height in mm
+  sheetRows = 2;    // Number of rows of QR codes
+  sheetCols = 2;    // Number of columns of QR codes
 
   // Form fields - Additional data
   category = '';
@@ -612,6 +1084,54 @@ export class QRGeneratorComponent implements OnInit {
     this.maxWeight = undefined;
     this.weightUnit = '';
     this.allowedCategoriesInput = '';
+  }
+
+  getCodesPerSheet(): number {
+    if (!this.labelSheetMode) return 0;
+    return this.sheetRows * this.sheetCols;
+  }
+
+  getSheetsNeeded(): number {
+    const perSheet = this.getCodesPerSheet();
+    if (perSheet === 0) return 0;
+    return Math.ceil(this.codeCount / perSheet);
+  }
+
+  getQRCodeSize(): number {
+    if (!this.labelSheetMode) return 0;
+    const margin = 3;
+    const gap = 2;
+    const textHeight = this.showLabel ? 6 : 0;
+
+    const availableWidth = this.sheetWidth - 2 * margin - (this.sheetCols - 1) * gap;
+    const availableHeight = this.sheetHeight - 2 * margin - (this.sheetRows - 1) * gap;
+
+    const maxWidthPerCell = availableWidth / this.sheetCols;
+    const maxHeightPerCell = (availableHeight / this.sheetRows) - textHeight;
+
+    return Math.floor(Math.min(maxWidthPerCell, maxHeightPerCell));
+  }
+
+  async generateBulkCodes(): Promise<void> {
+    this.generating.set(true);
+
+    try {
+      const prefix = this.bulkPrefix || (this.bulkType === 'location' ? 'LOC' : 'ITEM');
+
+      const codes = await this.qrService.generateQRCodes(this.bulkCount, {
+        baseUrl: this.baseUrl,
+        prefix: prefix,
+        type: this.bulkType,
+      });
+
+      this.generatedCodes.set(codes);
+      this.codeType = this.bulkType; // For CSV export
+      this.step.set(2);
+    } catch (error) {
+      console.error('Error generating bulk QR codes:', error);
+    } finally {
+      this.generating.set(false);
+    }
   }
 
   async generateCodes(): Promise<void> {
@@ -720,6 +1240,11 @@ export class QRGeneratorComponent implements OnInit {
         columns: this.columns,
         showLabel: this.showLabel,
         showUrl: this.showUrl,
+        labelSheetMode: this.labelSheetMode,
+        sheetWidth: this.sheetWidth,
+        sheetHeight: this.sheetHeight,
+        sheetRows: this.sheetRows,
+        sheetCols: this.sheetCols,
       };
 
       const blob = await this.qrService.generatePDF(this.generatedCodes(), config);
@@ -743,6 +1268,11 @@ export class QRGeneratorComponent implements OnInit {
         columns: this.columns,
         showLabel: this.showLabel,
         showUrl: this.showUrl,
+        labelSheetMode: this.labelSheetMode,
+        sheetWidth: this.sheetWidth,
+        sheetHeight: this.sheetHeight,
+        sheetRows: this.sheetRows,
+        sheetCols: this.sheetCols,
       };
 
       const blob = await this.qrService.generatePDF(this.generatedCodes(), config);

@@ -10,6 +10,8 @@ export const environment = {
       items: 574,
       scanEvents: 577,
       users: 579,
+      servers: 580, // TODO: Update with actual table ID after creating in Baserow
+      software: 581, // TODO: Update with actual table ID after creating in Baserow
     },
   },
 };
